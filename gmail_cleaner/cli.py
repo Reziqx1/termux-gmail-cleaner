@@ -36,7 +36,7 @@ class GmailMutationError(RuntimeError):
 def find_broad_query_terms(query: str) -> list[str]:
     """Return broad Gmail selectors that deserve extra scrutiny before applying."""
     return sorted(
-        set(match.group(0).lower() for match in BROAD_QUERY_PATTERN.finditer(query))
+        {match.group(0).lower() for match in BROAD_QUERY_PATTERN.finditer(query)}
     )
 
 
