@@ -3,7 +3,7 @@
 import collections
 import dataclasses
 import datetime
-import email.utils as email_utils
+import email.utils
 
 
 CATEGORY_LABELS = {
@@ -70,7 +70,7 @@ class MailboxAnalysis:
 
 def normalize_sender(raw_from: str) -> tuple[str, str]:
     """Normalize a Gmail From header into display name and lowercase address."""
-    display_name, address = email_utils.parseaddr(raw_from)
+    display_name, address = email.utils.parseaddr(raw_from)
     display_name = display_name.strip()
     address = address.strip()
 
