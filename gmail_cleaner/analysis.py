@@ -82,7 +82,9 @@ def normalize_sender(raw_from: str) -> tuple[str, str]:
 
 def categories_from_labels(label_ids: tuple[str, ...] | list[str]) -> tuple[str, ...]:
     """Return known Gmail categories in stable label order."""
-    return tuple(CATEGORY_LABELS[label] for label in label_ids if label in CATEGORY_LABELS)
+    return tuple(
+        CATEGORY_LABELS[label] for label in label_ids if label in CATEGORY_LABELS
+    )
 
 
 def age_bucket(internal_date: datetime.datetime, now: datetime.datetime) -> str:
