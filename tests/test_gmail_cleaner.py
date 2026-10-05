@@ -176,7 +176,9 @@ class GmailApiTests(unittest.TestCase):
             find_broad_query_terms("IN:ALL foo label:all"),
             ["in:all", "label:all"],
         )
-        self.assertEqual(find_broad_query_terms("category:promotions older_than:1y"), [])
+        self.assertEqual(
+            find_broad_query_terms("category:promotions older_than:1y"), []
+        )
 
     def test_parse_args_rejects_broad_yes_without_override(self):
         with self.assertRaises(SystemExit):
