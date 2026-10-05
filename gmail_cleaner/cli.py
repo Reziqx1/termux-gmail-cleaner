@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Dry-run-first Gmail cleanup CLI for Termux."""
 
 from __future__ import annotations
@@ -7,7 +6,8 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from collections.abc import Iterable, Sequence
+from typing import Any
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
