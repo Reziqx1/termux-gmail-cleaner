@@ -1,146 +1,189 @@
 # Termux Gmail Cleaner
 
-> A safety-first Gmail cleanup CLI for Android/Termux.
-
+[![Release](https://img.shields.io/github/v/release/Reziqx1/termux-gmail-cleaner?display_name=tag&sort=semver)](https://github.com/Reziqx1/termux-gmail-cleaner/releases)
 [![Tests](https://github.com/Reziqx1/termux-gmail-cleaner/actions/workflows/tests.yml/badge.svg)](https://github.com/Reziqx1/termux-gmail-cleaner/actions/workflows/tests.yml)
 [![Security audit](https://github.com/Reziqx1/termux-gmail-cleaner/actions/workflows/security.yml/badge.svg)](https://github.com/Reziqx1/termux-gmail-cleaner/actions/workflows/security.yml)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/Reziqx1/termux-gmail-cleaner)](LICENSE)
 
-Termux Gmail Cleaner searches Gmail using Gmail's own query syntax and lets you review matches before moving them to **Trash**. It never implements permanent deletion.
+> A safety-first Gmail cleanup CLI for Android/Termux.
 
-## Why it exists
+Termux Gmail Cleaner uses Gmail's own search syntax to find messages, show a lightweight preview, and optionally move matches to **Trash**. It deliberately does **not** implement permanent deletion.
 
-This project started as a personal Android/Termux automation experiment. It is intentionally small and readable so the behavior can be inspected instead of hidden behind a large framework.
+**Design principle:** observe → preview → explicitly confirm → change → verify
 
-The design principle is:
+## Why this project?
 
-**observe → preview → explicitly confirm → change → verify**
+Gmail cleanup is easy to automate badly. This project keeps the core operation small, inspectable, and reversible: search first, inspect metadata, require an explicit mutation mode, and only add the Gmail `TRASH` label.
+
+## Safety contract
+
+- **Dry run is the default.** A normal invocation never changes Gmail.
+- **Mutation requires `--apply`.**
+- **Interactive apply requires the exact confirmation word `TRASH`.**
+- **Non-interactive `--yes` is an explicit opt-in.**
+- Broad selectors such as `in:anywhere`, `in:all`, and `label:all` trigger an additional warning; `--yes` requires `--allow-broad-query` for those selectors.
+- Changes are performed with Gmail's `batchModify` using the `TRASH` label.
+- **Permanent deletion is intentionally unsupported.**
+- The tool previews only message metadata (`Subject` and `From`); it does not download message bodies or attachments for cleanup.
+- OAuth client files and tokens are ignored by Git and written with owner-only permissions where the platform supports them.
 
 ## Features
 
-- Gmail API with OAuth 2.0
-- Designed for Android + Termux
-- Read-only dry run by default
-- Explicit `--apply` plus a `TRASH` confirmation before mutation
-- Optional `--yes` for intentional non-interactive use
-- Configurable Gmail search query
-- Preview of matching message subjects/senders
-- Batched move-to-Trash operation
-- Credential files excluded from Git and written with owner-only permissions where supported
-- Unit tests and GitHub Actions CI
-- Dependency security auditing
+- Gmail API + OAuth 2.0
+- Android + Termux friendly
+- Gmail query syntax passthrough
+- Dry-run-first workflow
+- Exact interactive confirmation
+- Deliberate non-interactive mode
+- Broad-query safety guard
+- Metadata-only previews
+- Bounded Trash batches of 100 messages
+- Partial-batch failure reporting
+- Credential handling and refresh
+- Unit tests across Python 3.11–3.14
+- GitHub Actions test and dependency-audit workflows
+- Dependabot for Python and GitHub Actions dependencies
 
 ## Requirements
 
-- Android + Termux
-- Python 3.11–3.14
-- A Google Cloud OAuth client for a desktop application
-- Gmail API enabled for the account/project
+- Android with Termux
+- Python 3.11+
+- A Google Cloud OAuth client configured as a desktop application
+- Gmail API enabled for the Google Cloud project
 
-Install:
+### Termux setup
+
+For dependencies with native components, prefer Termux's packaged builds:
 
 ```bash
 pkg update
-pkg install python
-python -m pip install -e .
-```
-
-On Termux, native packages are preferred for dependencies that contain native extensions. For a development environment, install Termux's packaged cryptography and Ruff, then create the virtual environment with access to Termux's system site packages:
-
-```bash
-pkg install python-cryptography ruff
+pkg install python python-cryptography ruff
 python -m venv --system-site-packages .venv
 source .venv/bin/activate
 python -m pip install -e .
 ```
 
-This avoids forcing Android/aarch64 to build packages such as cryptography or Ruff from source.
+This is the development setup validated on a real Android/Termux environment.
 
 ## Authentication
 
-Download your Google OAuth client JSON and save it locally as:
+1. Create/download a Google OAuth client JSON for a desktop application.
+2. Save it locally as `credentials.json`.
+3. Keep the file private and never commit it.
+4. Run the CLI. On first use, it prints an authorization URL that can be opened manually in the Android browser.
+5. The resulting token is stored as `token.json` by default.
 
-```text
-credentials.json
-```
-
-Keep it private. The first run starts an OAuth loopback flow and prints the authorization URL so it can be opened manually in the Android browser.
-
-The resulting token is stored at `token.json` by default and is also ignored by Git.
-
-You can override both locations:
+Optional environment overrides:
 
 ```bash
 export GMAIL_CREDENTIALS="$HOME/.config/gmail-cleaner/credentials.json"
 export GMAIL_TOKEN="$HOME/.config/gmail-cleaner/token.json"
 ```
 
-## Usage
+For a test-mode Google OAuth application, authorize only an account that is permitted to use the application's configured test audience.
 
-### 1. Preview first
+## Quick start
 
-```bash
-python -m gmail_cleaner --query 'category:promotions older_than:1y'
-```
-
-This mode makes **no Gmail changes**.
-
-### 2. Apply after reviewing
+### Preview
 
 ```bash
-python -m gmail_cleaner --query 'category:promotions older_than:1y' --apply
+gmail-cleaner --query 'category:promotions older_than:1y'
 ```
 
-The CLI then asks you to type `TRASH`.
+No Gmail changes are made.
 
-For deliberate automation where you already trust the exact query:
+### Apply
 
 ```bash
-python -m gmail_cleaner --query 'from:example.com' --apply --yes
+gmail-cleaner --query 'category:promotions older_than:1y' --apply
 ```
 
-Broad selectors such as `in:anywhere`, `in:all`, and `label:all` receive an extra warning before interactive apply. In non-interactive `--yes` mode, you must explicitly add `--allow-broad-query` for those selectors.
+Review the preview and type `TRASH` when prompted.
 
-### 3. Control result volume
+### Automation
 
 ```bash
-python -m gmail_cleaner --query 'from:example.com' --max-results 100 --preview 25
+gmail-cleaner --query 'from:example.com' --apply --yes
 ```
+
+Use `--yes` only when the exact query and result scope are already trusted.
+
+For broad selectors, add the explicit safety override:
+
+```bash
+gmail-cleaner --query 'in:anywhere category:promotions' --apply --yes --allow-broad-query
+```
+
+### Limit the operation
+
+```bash
+gmail-cleaner --query 'from:example.com' --max-results 100 --preview 25
+```
+
+The default maximum is 50 messages and the default preview is 20.
 
 ## Gmail query examples
 
-Gmail query syntax is passed through unchanged:
+The query is passed to Gmail unchanged:
 
 ```text
 older_than:1y
 category:promotions older_than:6m
 from:example.com
 has:attachment larger:10M
+in:anywhere newer_than:7d
 ```
 
-Start narrow. Use dry-run output to verify what the query selects.
+Start narrow and verify the dry-run output before applying a cleanup.
 
-## Security model
+## What the tool does not do
 
-This project intentionally does **not** support permanent deletion.
+This project intentionally does not:
 
-The required Gmail scope is `gmail.modify`, used to search messages and add the `TRASH` label.
+- permanently delete messages
+- download or export mail bodies for cleanup
+- inspect attachments
+- infer that a message is junk based on its content
+- silently mutate Gmail in dry-run mode
+- commit OAuth credentials, tokens, or personal mailbox data
 
-Apply mode includes a broad-query safety warning for selectors that can match large or mixed mail sets. Non-interactive `--yes` mode is blocked for those selectors unless `--allow-broad-query` is explicitly supplied.
+Gmail itself controls the lifecycle of messages after they are moved to Trash.
 
-Trash mutations are performed in batches of 100. If a later batch fails, the CLI reports how many messages had already been submitted successfully so a partial operation is visible.
+## Architecture
 
-Never commit credentials, refresh tokens, exported mail or personal message data. See [SECURITY.md](SECURITY.md).
+The current v0.1 architecture is deliberately small:
+
+```text
+CLI arguments
+     │
+     ▼
+OAuth credential layer
+     │
+     ▼
+Gmail search
+     │
+     ▼
+message IDs
+     │
+     ├── metadata preview
+     │
+     └── apply gate
+            │
+            ▼
+      batchModify(TRASH)
+```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for design boundaries and the planned analysis layer for v0.2.
 
 ## Development
 
-Run tests:
+Run the tests:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-Run lint/format checks:
+Run static checks:
 
 ```bash
 ruff check .
@@ -153,23 +196,51 @@ Audit dependencies:
 pip-audit
 ```
 
-The CI runs tests and security checks automatically.
+Every pull request should leave the tests and security workflow green.
+
+## Verification
+
+v0.1.0 has been validated on a real Android/Termux environment with:
+
+- OAuth authorization against a real Gmail account
+- real Gmail read-only dry runs
+- a one-message disposable Trash mutation
+- verification that the test message appeared in Trash and disappeared from Inbox
+- 21 unit tests passing locally
+- CI test matrix passing on Python 3.11–3.14
+- dependency security audit passing
+
+These checks establish that the core workflow works; they are not a guarantee that every Gmail query is safe. Query scope remains the operator's responsibility.
 
 ## Project status
 
-**v0.1.0 — release candidate.**
+**v0.1.0 — released.**
 
-The core cleanup flow has been validated against a real Gmail account on Android/Termux, including OAuth, read-only dry run, and a one-message Trash mutation test. The v0.1.0 release is ready to be tagged after the final CI gate. Continue using narrowly scoped queries for real cleanup.
+The v0.1 series is the stable safety-first foundation. v0.2 will focus on mailbox analysis and reporting before introducing broader automation.
 
 ## Roadmap
 
-- [x] Add safer query guards and partial-batch reporting
-- [ ] Add safer batch verification/reporting
-- [ ] Add optional structured output for scripts
-- [x] Add unit tests around OAuth and failure paths
-- [x] Update CI to test supported Python versions
-- [x] Validate the CLI on a real Termux installation
-- [ ] Publish the v0.1.0 tagged release
+### v0.2 — Analysis
+
+- [ ] Lightweight mailbox scan
+- [ ] Sender/category/age grouping
+- [ ] Cleanup candidate reports
+- [ ] Structured output for scripts
+- [ ] Safer batch verification/reporting
+
+### Later
+
+- [ ] Reusable cleanup presets
+- [ ] Better operator-facing reports
+- [ ] Additional portability improvements
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for credential handling and vulnerability reporting.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Safety, reproducibility, tests, and clear behavior come before feature volume.
 
 ## License
 
