@@ -88,6 +88,8 @@ For deliberate automation where you already trust the exact query:
 python -m gmail_cleaner --query 'from:example.com' --apply --yes
 ```
 
+Broad selectors such as `in:anywhere`, `in:all`, and `label:all` receive an extra warning before interactive apply. In non-interactive `--yes` mode, you must explicitly add `--allow-broad-query` for those selectors.
+
 ### 3. Control result volume
 
 ```bash
@@ -112,6 +114,10 @@ Start narrow. Use dry-run output to verify what the query selects.
 This project intentionally does **not** support permanent deletion.
 
 The required Gmail scope is `gmail.modify`, used to search messages and add the `TRASH` label.
+
+Apply mode includes a broad-query safety warning for selectors that can match large or mixed mail sets. Non-interactive `--yes` mode is blocked for those selectors unless `--allow-broad-query` is explicitly supplied.
+
+Trash mutations are performed in batches of 100. If a later batch fails, the CLI reports how many messages had already been submitted successfully so a partial operation is visible.
 
 Never commit credentials, refresh tokens, exported mail or personal message data. See [SECURITY.md](SECURITY.md).
 
@@ -142,15 +148,16 @@ The CI runs tests and security checks automatically.
 
 **Unreleased v0.1.0 — early-stage personal project.**
 
-The core cleanup flow is implemented, but the project has not yet been published as a packaged release. Real-device validation should be performed with a test Gmail account or carefully scoped queries before broad use.
+The core cleanup flow has been validated against a real Gmail account on Android/Termux, including OAuth, read-only dry run, and a one-message Trash mutation test. The project has not yet been published as a packaged release; continue using narrowly scoped queries until the release hardening pass is complete.
 
 ## Roadmap
 
+- [x] Add safer query guards and partial-batch reporting
 - [ ] Add safer batch verification/reporting
 - [ ] Add optional structured output for scripts
 - [x] Add unit tests around OAuth and failure paths
 - [x] Update CI to test supported Python versions
-- [ ] Validate the CLI on a real Termux installation
+- [x] Validate the CLI on a real Termux installation
 - [ ] Publish a first tagged release after real-device validation
 
 ## License
