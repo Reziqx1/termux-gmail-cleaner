@@ -4,8 +4,7 @@ title: "Termux Gmail Cleaner"
 version: 0.1.0
 date-released: 2026-10-05
 authors:
-  - family-names: "Rez"
-    given-names: "Rez"
+  - name: "Rez"
 repository-code: "https://github.com/Reziqx1/termux-gmail-cleaner"
 url: "https://github.com/Reziqx1/termux-gmail-cleaner"
 license: "MIT"
