@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "termux-gmail-cleaner"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Dry-run-first Gmail cleanup CLI for Termux"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [{ name = "Rez" }]
 dependencies = [
@@ -25,9 +25,12 @@ dev = [
 [project.scripts]
 gmail-cleaner = "gmail_cleaner.cli:main"
 
+[tool.setuptools.dynamic]
+version = { attr = "gmail_cleaner.__version__" }
+
 [tool.setuptools.packages.find]
 include = ["gmail_cleaner*"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py311"
