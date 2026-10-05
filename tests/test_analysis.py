@@ -1,5 +1,5 @@
 import unittest
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from gmail_cleaner.analysis import (
     MessageObservation,
@@ -74,7 +74,7 @@ class AnalysisTests(unittest.TestCase):
 
     def test_gmail_internal_date_conversion(self):
         dt = gmail_internal_date_to_datetime("0")
-        self.assertEqual(dt, datetime(1970, 1, 1, tzinfo=timezone.utc))
+        self.assertEqual(dt, datetime(1970, 1, 1, tzinfo=UTC))
 
     def test_analysis_is_deterministic_and_structured(self):
         observations = [
