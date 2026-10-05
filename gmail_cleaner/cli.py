@@ -16,6 +16,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
+VERSION = "0.1.0"
 DEFAULT_MAX_RESULTS = 50
 DEFAULT_PREVIEW = 20
 BATCH_SIZE = 100
@@ -150,6 +151,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Preview or move Gmail messages to Trash using a search query."
     )
+    parser.add_argument("--version", action="version", version=VERSION)
     parser.add_argument(
         "--query",
         required=True,
