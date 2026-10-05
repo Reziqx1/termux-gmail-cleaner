@@ -1,7 +1,5 @@
 """Pure, read-only mailbox analysis primitives for v0.2."""
 
-from __future__ import annotations
-
 from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, datetime
