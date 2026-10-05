@@ -45,6 +45,17 @@ pkg install python
 python -m pip install -e .
 ```
 
+On Termux, native packages are preferred for dependencies that contain native extensions. For a development environment, install Termux's packaged cryptography and Ruff, then create the virtual environment with access to Termux's system site packages:
+
+```bash
+pkg install python-cryptography ruff
+python -m venv --system-site-packages .venv
+source .venv/bin/activate
+python -m pip install -e .
+```
+
+This avoids forcing Android/aarch64 to build packages such as cryptography or Ruff from source.
+
 ## Authentication
 
 Download your Google OAuth client JSON and save it locally as:
