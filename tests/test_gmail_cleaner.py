@@ -144,6 +144,7 @@ class GmailApiTests(unittest.TestCase):
         from gmail_cleaner.cli import run
 
         messages = FakeMessages(
+            list_responses=[{"messages": [{"id": "abc"}]}],
             metadata={
                 "payload": {
                     "headers": [
@@ -151,7 +152,7 @@ class GmailApiTests(unittest.TestCase):
                         {"name": "From", "value": "Example <test@example.com>"},
                     ]
                 }
-            }
+            },
         )
         service = FakeService(messages)
 
