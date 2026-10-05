@@ -131,6 +131,29 @@ class GmailApiTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             parse_args(["--query", "from:test@example.com", "--yes"])
 
+    def test_run_dry_run_never_moves_messages(self):
+        from unittest.mock import patch
+
+        from gmail_cleaner.cli import run
+
+        messages = FakeMessages(
+            metadata={
+                "payload": {
+                    "headers": [
+                        {"name": "Subject", "value": "Test"},
+                        {"name": "From", "value": "Example <test@example.com>"},
+                    ]
+                }
+            }
+        )
+        service = FakeService(messages)
+
+        args = parse_args(["--query", "from:test@example.com"])
+        with patch("gmail_cleaner.cli.build_service", return_value=service):
+            self.assertEqual(run(args), 0)
+
+        self.assertEqual(messages.batch_calls, [])
+
 
 if __name__ == "__main__":
     unittest.main()
