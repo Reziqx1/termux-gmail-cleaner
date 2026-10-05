@@ -64,6 +64,8 @@ def fetch_observation(service: Any, message_id: str) -> MessageObservation:
     return observation_from_resource(response)
 
 
-def fetch_observations(service: Any, message_ids: list[str]) -> list[MessageObservation]:
+def fetch_observations(
+    service: Any, message_ids: list[str]
+) -> list[MessageObservation]:
     """Fetch observations in message-ID order."""
     return [fetch_observation(service, message_id) for message_id in message_ids]
