@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from email.utils import parseaddr
 
 
@@ -164,4 +164,4 @@ def analyze_observations(
 def gmail_internal_date_to_datetime(internal_date_ms: str | int) -> datetime:
     """Convert Gmail's millisecond internal date to an aware UTC datetime."""
     milliseconds = int(internal_date_ms)
-    return datetime.fromtimestamp(milliseconds / 1000, tz=timezone.utc)
+    return datetime.fromtimestamp(milliseconds / 1000, tz=UTC)
