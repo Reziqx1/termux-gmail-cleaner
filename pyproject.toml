@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "termux-gmail-cleaner"
+version = "0.1.0"
+description = "Dry-run-first Gmail cleanup CLI for Termux"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Rez" }]
+dependencies = [
+    "google-api-python-client>=2.100,<3",
+    "google-auth-httplib2>=0.2,<1",
+    "google-auth-oauthlib>=1.2,<2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8,<1",
+    "pip-audit>=2.7,<3",
+]
+
+[project.scripts]
+gmail-cleaner = "gmail_cleaner.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["gmail_cleaner*"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
