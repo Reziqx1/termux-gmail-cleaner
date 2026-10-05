@@ -131,6 +131,13 @@ class GmailApiTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             parse_args(["--query", "from:test@example.com", "--yes"])
 
+    def test_cli_version(self):
+        from gmail_cleaner.cli import VERSION, parse_args
+
+        args = parse_args(["--query", "from:test@example.com"])
+        self.assertEqual(VERSION, "0.1.0")
+        self.assertEqual(args.query, "from:test@example.com")
+
     def test_run_dry_run_never_moves_messages(self):
         from unittest.mock import patch
 
