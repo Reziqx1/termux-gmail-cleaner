@@ -5,7 +5,6 @@ import dataclasses
 import datetime
 import email.utils
 
-
 CATEGORY_LABELS = {
     "CATEGORY_PRIMARY": "primary",
     "CATEGORY_SOCIAL": "social",
