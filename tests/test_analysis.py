@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from gmail_cleaner.analysis import (
     MessageObservation,
@@ -12,7 +12,7 @@ from gmail_cleaner.analysis import (
 
 
 class AnalysisTests(unittest.TestCase):
-    NOW = datetime(2026, 10, 5, 12, tzinfo=timezone.utc)
+    NOW = datetime(2026, 10, 5, 12, tzinfo=UTC)
 
     def make_message(
         self,
@@ -70,7 +70,7 @@ class AnalysisTests(unittest.TestCase):
 
     def test_age_bucket_rejects_naive_datetime(self):
         with self.assertRaises(ValueError):
-            age_bucket(datetime(2026, 1, 1), self.NOW)
+            age_bucket(datetime.fromisoformat("2026-01-01T00:00:00"), self.NOW)
 
     def test_gmail_internal_date_conversion(self):
         dt = gmail_internal_date_to_datetime("0")
