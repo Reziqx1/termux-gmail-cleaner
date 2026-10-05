@@ -66,9 +66,7 @@ def get_credentials(credentials_path: Path, token_path: Path) -> Credentials:
                 "Create an OAuth client for a desktop application and keep it private."
             )
 
-        flow = InstalledAppFlow.from_client_secrets_file(
-            str(credentials_path), SCOPES
-        )
+        flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)
         # Termux may not have a desktop browser integration; the URL can still
         # be opened manually in the Android browser.
         creds = flow.run_local_server(port=0, open_browser=False)
