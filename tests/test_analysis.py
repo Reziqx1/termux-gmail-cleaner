@@ -106,17 +106,26 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(result.age_bucket_counts["180-365d"], 1)
         self.assertEqual(result.age_bucket_counts["365d+"], 1)
         self.assertEqual(
-            result.candidates,
-            (
-                result.candidates[0],
-                result.candidates[1],
-            ),
+            [candidate.message_id for candidate in result.candidates],
+            ["m1", "m3"],
         )
         self.assertEqual(
             result.candidates[0].reasons,
             ("age:180d+", "category:promotions"),
         )
-        self.assertEqual(result.to_dict()["candidates"][0]["message_id"], "m1")
+        self.assertEqual(
+            result.to_dict()["candidates"],
+            [
+                {
+                    "message_id": "m1",
+                    "reasons": ["age:180d+", "category:promotions"],
+                },
+                {
+                    "message_id": "m3",
+                    "reasons": ["age:180d+", "category:promotions"],
+                },
+            ],
+        )
 
     def test_analysis_does_not_candidate_old_primary_mail(self):
         result = analyze_observations(
