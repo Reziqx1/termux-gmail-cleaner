@@ -1,9 +1,9 @@
 """Pure, read-only mailbox analysis primitives for v0.2."""
 
-from collections import Counter
-from dataclasses import dataclass
-from datetime import UTC, datetime
-from email import utils as email_utils
+import collections
+import dataclasses
+import datetime
+import email.utils as email_utils
 
 
 CATEGORY_LABELS = {
@@ -23,7 +23,7 @@ AGE_BUCKETS = (
 )
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class MessageObservation:
     """Normalized metadata required for mailbox analysis."""
 
@@ -32,7 +32,7 @@ class MessageObservation:
     sender_name: str
     sender_email: str
     subject: str
-    internal_date: datetime
+    internal_date: datetime.datetime
     label_ids: tuple[str, ...]
 
 
@@ -90,7 +90,7 @@ def categories_from_labels(label_ids: tuple[str, ...] | list[str]) -> tuple[str,
     )
 
 
-def age_bucket(internal_date: datetime, now: datetime) -> str:
+def age_bucket(internal_date: datetime.datetime, now: datetime.datetime) -> str:
     """Place a message into a deterministic age bucket."""
     if internal_date.tzinfo is None or now.tzinfo is None:
         raise ValueError("internal_date and now must be timezone-aware")
@@ -107,7 +107,7 @@ def age_bucket(internal_date: datetime, now: datetime) -> str:
 def analyze_observations(
     observations: list[MessageObservation] | tuple[MessageObservation, ...],
     *,
-    now: datetime,
+    now: datetime.datetime,
     candidate_categories: tuple[str, ...] = ("promotions",),
     candidate_older_than_days: int = 180,
 ) -> MailboxAnalysis:
@@ -117,9 +117,9 @@ def analyze_observations(
     if candidate_older_than_days < 0:
         raise ValueError("candidate_older_than_days cannot be negative")
 
-    sender_counts = Counter(item.sender_email for item in observations)
-    category_counts: Counter[str] = Counter()
-    age_counts: Counter[str] = Counter()
+    sender_counts = collections.Counter(item.sender_email for item in observations)
+    category_counts: collections.Counter[str] = Counter()
+    age_counts: collections.Counter[str] = Counter()
     candidates: list[ReviewCandidate] = []
     wanted_categories = set(candidate_categories)
 
@@ -159,7 +159,7 @@ def analyze_observations(
     )
 
 
-def gmail_internal_date_to_datetime(internal_date_ms: str | int) -> datetime:
+def gmail_internal_date_to_datetime(internal_date_ms: str | int) -> datetime.datetime:
     """Convert Gmail's millisecond internal date to an aware UTC datetime."""
     milliseconds = int(internal_date_ms)
-    return datetime.fromtimestamp(milliseconds / 1000, tz=UTC)
+    return datetime.datetime.fromtimestamp(milliseconds / 1000, tz=datetime.UTC)
