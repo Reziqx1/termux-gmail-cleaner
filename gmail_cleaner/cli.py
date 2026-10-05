@@ -49,15 +49,20 @@ def chunked(items: Sequence[str], size: int) -> Iterable[list[str]]:
         yield list(items[start : start + size])
 
 
-def _secure_write(path: Path, content: str) -> None:
-    """Write a credential file with owner-only permissions when supported."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
+def _secure_permissions(path: Path) -> None:
+    """Apply owner-only permissions when the filesystem supports them."""
     try:
         path.chmod(0o600)
     except OSError:
         # Some filesystems do not support Unix permission changes.
         pass
+
+
+def _secure_write(path: Path, content: str) -> None:
+    """Write a credential file with owner-only permissions when supported."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    _secure_permissions(path)
 
 
 def get_credentials(credentials_path: Path, token_path: Path) -> Credentials:
@@ -66,6 +71,7 @@ def get_credentials(credentials_path: Path, token_path: Path) -> Credentials:
     creds: Credentials | None = None
 
     if token_path.exists():
+        _secure_permissions(token_path)
         try:
             creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
         except (ValueError, KeyError) as exc:
@@ -83,6 +89,7 @@ def get_credentials(credentials_path: Path, token_path: Path) -> Credentials:
                 "Create an OAuth client for a desktop application and keep it private."
             )
 
+        _secure_permissions(credentials_path)
         flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)
         # Termux may not have a desktop browser integration; the URL can still
         # be opened manually in the Android browser.
@@ -239,6 +246,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
     if args.preview < 0:
         raise SystemExit("--preview cannot be negative.")
+
+    if args.apply and args.preview == 0 and not args.yes:
+        raise SystemExit(
+            "--preview 0 with --apply requires --yes. "
+            "Interactive apply must show at least one preview item."
+        )
 
     if not args.query.strip():
         raise SystemExit("--query cannot be empty.")

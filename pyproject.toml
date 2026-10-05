@@ -5,11 +5,26 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "termux-gmail-cleaner"
 dynamic = ["version"]
-description = "Dry-run-first Gmail cleanup CLI for Termux"
+description = "Safety-first Gmail cleanup CLI for Android/Termux"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [{ name = "Rez" }]
+keywords = ["gmail", "termux", "android", "automation", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Android",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Communications :: Email",
+    "Topic :: Utilities",
+]
 dependencies = [
     "google-api-python-client>=2.100,<3",
     "google-auth-httplib2>=0.2,<1",
@@ -21,6 +36,12 @@ dev = [
     "ruff>=0.8,<1",
     "pip-audit>=2.7,<3",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Reziqx1/termux-gmail-cleaner"
+Repository = "https://github.com/Reziqx1/termux-gmail-cleaner"
+Issues = "https://github.com/Reziqx1/termux-gmail-cleaner/issues"
+Changelog = "https://github.com/Reziqx1/termux-gmail-cleaner/blob/main/CHANGELOG.md"
 
 [project.scripts]
 gmail-cleaner = "gmail_cleaner.cli:main"
