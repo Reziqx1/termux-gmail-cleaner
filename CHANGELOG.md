@@ -12,6 +12,8 @@
 - Apply owner-only permissions to existing OAuth credential files before loading them where supported.
 - Add a read-only Gmail metadata observer and deterministic mailbox analysis primitives.
 - Add a JSON-producing `--analyze` CLI mode with explicit review-candidate criteria.
+- Enrich review-candidate output with sender, subject, age, category, and explicit reasons for operator review.
+- Deduplicate candidate reasons and add exact-age-boundary coverage to the analysis test suite.
 
 ## [0.1.0] - 2026-10-05
 

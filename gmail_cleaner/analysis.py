@@ -40,6 +40,10 @@ class ReviewCandidate:
     """A review signal, never an instruction to mutate Gmail."""
 
     message_id: str
+    sender_email: str
+    subject: str
+    age_days: int
+    categories: tuple[str, ...]
     reasons: tuple[str, ...]
 
 
@@ -61,7 +65,14 @@ class MailboxAnalysis:
             "category_counts": dict(self.category_counts),
             "age_bucket_counts": dict(self.age_bucket_counts),
             "candidates": [
-                {"message_id": item.message_id, "reasons": list(item.reasons)}
+                {
+                    "message_id": item.message_id,
+                    "sender_email": item.sender_email,
+                    "subject": item.subject,
+                    "age_days": item.age_days,
+                    "categories": list(item.categories),
+                    "reasons": list(item.reasons),
+                }
                 for item in self.candidates
             ],
         }
@@ -129,7 +140,8 @@ def analyze_observations(
 
         age_counts[age_bucket(item.internal_date, now)] += 1
 
-        age_days = max(0, (now - item.internal_date).total_seconds() / 86400)
+        age_seconds = max(0, (now - item.internal_date).total_seconds())
+        age_days = int(age_seconds / 86400)
         reasons: list[str] = []
 
         for category in categories:
@@ -143,7 +155,11 @@ def analyze_observations(
             candidates.append(
                 ReviewCandidate(
                     message_id=item.message_id,
-                    reasons=tuple(sorted(reasons)),
+                    sender_email=item.sender_email,
+                    subject=item.subject,
+                    age_days=age_days,
+                    categories=categories,
+                    reasons=tuple(sorted(set(reasons))),
                 )
             )
 

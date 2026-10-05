@@ -170,7 +170,7 @@ Gmail itself controls the lifecycle of messages after they are moved to Trash.
 
 ## Architecture
 
-The current v0.1 architecture is deliberately small:
+The current architecture keeps analysis and mutation deliberately separated:
 
 ```text
 CLI arguments
@@ -183,16 +183,24 @@ Gmail search
      │
      ▼
 message IDs
+     ├───────────────┐
+     │               │
+     ▼               ▼
+metadata preview   metadata observer
+     │               │
+     │               ▼
+     │          analysis core
+     │               │
+     │               ▼
+     │          JSON report
      │
-     ├── metadata preview
-     │
-     └── apply gate
-            │
-            ▼
-      batchModify(TRASH)
+     └── apply gate ──► batchModify(TRASH)
+                              │
+                              ▼
+                         verification
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for design boundaries and the planned analysis layer for v0.2.
+The v0.2 analysis path is read-only and cannot be combined with `--apply`. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/V0.2_ANALYSIS.md](docs/V0.2_ANALYSIS.md) for the design boundaries.
 
 ## Development
 
@@ -219,13 +227,14 @@ Every pull request should leave the tests and security workflow green.
 
 ## Verification
 
-v0.1.0 has been validated on a real Android/Termux environment with:
+The project has been validated on a real Android/Termux environment with:
 
 - OAuth authorization against a real Gmail account
 - real Gmail read-only dry runs
 - a one-message disposable Trash mutation
 - verification that the test message appeared in Trash and disappeared from Inbox
-- 21 unit tests passing locally
+- **43 unit tests passing locally** after the merged v0.2 foundation
+- real Gmail `--analyze` runs returning structured JSON without mutations
 - CI test matrix passing on Python 3.11–3.14
 - dependency security audit passing
 
@@ -233,9 +242,9 @@ These checks establish that the core workflow works; they are not a guarantee th
 
 ## Project status
 
-**v0.1.0 — released.**
+**v0.1.0 — released; v0.2 analysis is in development.**
 
-The v0.1 series is the stable safety-first foundation. v0.2 will focus on mailbox analysis and reporting before introducing broader automation.
+The v0.1 series is the stable safety-first mutation foundation. The v0.2 series adds read-only mailbox analysis and reporting before any broader automation.
 
 ## Roadmap
 
@@ -243,8 +252,8 @@ The v0.1 series is the stable safety-first foundation. v0.2 will focus on mailbo
 
 - [ ] Lightweight mailbox scan
 - [ ] Sender/category/age grouping
-- [ ] Cleanup candidate reports
-- [ ] Structured output for scripts
+- [x] Cleanup candidate reports
+- [x] Structured output for scripts
 - [ ] Safer batch verification/reporting
 
 ### Later

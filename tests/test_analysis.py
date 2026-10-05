@@ -21,13 +21,14 @@ class AnalysisTests(unittest.TestCase):
         sender_email="news@example.com",
         age_days=200,
         label_ids=("CATEGORY_PROMOTIONS",),
+        subject="Example subject",
     ):
         return MessageObservation(
             message_id=message_id,
             thread_id=f"t-{message_id}",
             sender_name="Example",
             sender_email=sender_email,
-            subject="Example subject",
+            subject=subject,
             internal_date=self.NOW - timedelta(days=age_days),
             label_ids=tuple(label_ids),
         )
@@ -112,25 +113,52 @@ class AnalysisTests(unittest.TestCase):
             ("age:180d+", "category:promotions"),
         )
         self.assertEqual(
+            result.candidates[0].sender_email,
+            "news@example.com",
+        )
+        self.assertEqual(
+            result.candidates[0].subject,
+            "Example subject",
+        )
+        self.assertEqual(result.candidates[0].age_days, 200)
+        self.assertEqual(result.candidates[0].categories, ("promotions",))
+        self.assertEqual(
             result.to_dict()["candidates"],
             [
                 {
+                    "age_days": 200,
+                    "categories": ["promotions"],
                     "message_id": "m1",
                     "reasons": ["age:180d+", "category:promotions"],
+                    "sender_email": "news@example.com",
+                    "subject": "Example subject",
                 },
                 {
+                    "age_days": 400,
+                    "categories": ["promotions"],
                     "message_id": "m3",
                     "reasons": ["age:180d+", "category:promotions"],
+                    "sender_email": "news@example.com",
+                    "subject": "Example subject",
                 },
             ],
         )
 
-    def test_analysis_does_not_candidate_old_primary_mail(self):
+    def test_candidate_is_excluded_when_only_age_matches(self):
         result = analyze_observations(
             [self.make_message(label_ids=("CATEGORY_PRIMARY",), age_days=500)],
             now=self.NOW,
+            candidate_older_than_days=180,
         )
         self.assertEqual(result.candidates, ())
+
+    def test_candidate_matches_exact_age_boundary(self):
+        result = analyze_observations(
+            [self.make_message(age_days=180)],
+            now=self.NOW,
+            candidate_older_than_days=180,
+        )
+        self.assertEqual([item.message_id for item in result.candidates], ["m1"])
 
     def test_analysis_supports_empty_input(self):
         result = analyze_observations([], now=self.NOW)
