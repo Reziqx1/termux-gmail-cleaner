@@ -26,7 +26,9 @@ class AnalyzeCliTests(unittest.TestCase):
 
     def test_parser_rejects_analysis_with_apply(self):
         with self.assertRaises(SystemExit):
-            parse_args(["--query", "category:promotions", "--analyze", "--apply"])
+            parse_args(
+                ["--query", "category:promotions", "--analyze", "--apply"]
+            )
 
     def test_parser_rejects_analysis_with_yes(self):
         with self.assertRaises(SystemExit):
@@ -57,18 +59,18 @@ class AnalyzeCliTests(unittest.TestCase):
             patch("gmail_cleaner.cli.build_service", return_value=service),
             redirect_stdout(stdout),
         ):
-                self.assertEqual(
-                    main(
-                        [
-                            "--query",
-                            "category:promotions",
-                            "--analyze",
-                            "--max-results",
-                            "1",
-                        ]
-                    ),
-                    0,
-                )
+            self.assertEqual(
+                main(
+                    [
+                        "--query",
+                        "category:promotions",
+                        "--analyze",
+                        "--max-results",
+                        "1",
+                    ]
+                ),
+                0,
+            )
 
         report = json.loads(stdout.getvalue())
         self.assertEqual(report["query"], "category:promotions")
