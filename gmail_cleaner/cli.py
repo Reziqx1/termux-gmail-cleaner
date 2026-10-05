@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from collections.abc import Iterable, Sequence
 from pathlib import Path
@@ -22,6 +23,21 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
 DEFAULT_MAX_RESULTS = 50
 DEFAULT_PREVIEW = 20
 BATCH_SIZE = 100
+BROAD_QUERY_PATTERN = re.compile(
+    r"(?<!\S)(?:in:anywhere|in:all|label:all)(?!\S)",
+    re.IGNORECASE,
+)
+
+
+class GmailMutationError(RuntimeError):
+    """Raised when a Trash mutation fails after zero or more successful batches."""
+
+
+def find_broad_query_terms(query: str) -> list[str]:
+    """Return broad Gmail selectors that deserve extra scrutiny before applying."""
+    return sorted(
+        {match.group(0).lower() for match in BROAD_QUERY_PATTERN.finditer(query)}
+    )
 
 
 def chunked(items: Sequence[str], size: int) -> Iterable[list[str]]:
@@ -132,18 +148,30 @@ def fetch_metadata(service: Any, message_id: str) -> tuple[str, str]:
     )
 
 
-def move_to_trash(service: Any, message_ids: Sequence[str]) -> None:
-    """Move messages to Gmail Trash in bounded batches."""
-    for batch in chunked(message_ids, BATCH_SIZE):
-        (
-            service.users()
-            .messages()
-            .batchModify(
-                userId="me",
-                body={"ids": batch, "addLabelIds": ["TRASH"]},
+def move_to_trash(service: Any, message_ids: Sequence[str]) -> int:
+    """Move messages to Gmail Trash in bounded batches and report progress."""
+    moved = 0
+    batches = list(chunked(message_ids, BATCH_SIZE))
+
+    for index, batch in enumerate(batches, start=1):
+        try:
+            (
+                service.users()
+                .messages()
+                .batchModify(
+                    userId="me",
+                    body={"ids": batch, "addLabelIds": ["TRASH"]},
+                )
+                .execute()
             )
-            .execute()
-        )
+        except HttpError as exc:
+            raise GmailMutationError(
+                f"Trash operation failed in batch {index}/{len(batches)} "
+                f"after successfully moving {moved} message(s)."
+            ) from exc
+        moved += len(batch)
+
+    return moved
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -191,6 +219,14 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Skip the confirmation prompt. Only meaningful with --apply.",
     )
+    parser.add_argument(
+        "--allow-broad-query",
+        action="store_true",
+        help=(
+            "Allow non-interactive --yes mode for broad selectors such as "
+            "in:anywhere. Review the query carefully before using this."
+        ),
+    )
     return parser
 
 
@@ -209,6 +245,16 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
     if args.yes and not args.apply:
         raise SystemExit("--yes requires --apply.")
+
+    if args.allow_broad_query and not args.apply:
+        raise SystemExit("--allow-broad-query requires --apply.")
+
+    broad_terms = find_broad_query_terms(args.query)
+    if broad_terms and args.yes and not args.allow_broad_query:
+        selectors = ", ".join(broad_terms)
+        raise SystemExit(
+            f"--yes with a broad query ({selectors}) requires --allow-broad-query."
+        )
 
     return args
 
@@ -248,12 +294,21 @@ def run(args: argparse.Namespace) -> int:
         print("No changes made. Re-run with --apply to move these messages to Trash.")
         return 0
 
+    broad_terms = find_broad_query_terms(args.query)
+    if broad_terms:
+        selectors = ", ".join(broad_terms)
+        print(
+            f"WARNING: broad query selector(s) detected: {selectors}. "
+            "This can include important mail outside a narrow cleanup target. "
+            "Review the preview carefully."
+        )
+
     if not args.yes and not _confirm_apply(len(message_ids)):
         print("Cancelled. No changes made.")
         return 0
 
-    move_to_trash(service, message_ids)
-    print(f"Moved {len(message_ids)} message(s) to Gmail Trash.")
+    moved = move_to_trash(service, message_ids)
+    print(f"Moved {moved} message(s) to Gmail Trash.")
     return 0
 
 

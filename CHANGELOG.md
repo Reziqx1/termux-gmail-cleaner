@@ -7,6 +7,10 @@
 - Support Python 3.11 through 3.14 in project metadata and CI.
 - Centralize the package version in `gmail_cleaner.__version__`.
 - Expand tests for OAuth credential handling, apply behavior and CLI error reporting.
+- Warn on broad Gmail selectors before interactive mutation.
+- Require an explicit `--allow-broad-query` opt-in for broad selectors in non-interactive `--yes` mode.
+- Report successful mutation progress when a later Trash batch fails.
+- Validate the CLI on real Android/Termux with a real Gmail dry run and one-message Trash test.
 
 ## [0.1.0] - 2026-10-05
 

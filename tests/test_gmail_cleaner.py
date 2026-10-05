@@ -5,12 +5,16 @@ from contextlib import redirect_stderr
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from googleapiclient.errors import HttpError
+
 from gmail_cleaner import __version__
 from gmail_cleaner.cli import (
     BATCH_SIZE,
+    GmailMutationError,
     _confirm_apply,
     chunked,
     fetch_metadata,
+    find_broad_query_terms,
     get_credentials,
     main,
     move_to_trash,
@@ -50,9 +54,10 @@ class ChunkedTests(unittest.TestCase):
 
 
 class FakeMessages:
-    def __init__(self, list_responses=None, metadata=None):
+    def __init__(self, list_responses=None, metadata=None, batch_fail_at=None):
         self.list_responses = list(list_responses or [])
         self.metadata = metadata or {}
+        self.batch_fail_at = batch_fail_at
         self.list_calls = []
         self.get_calls = []
         self.batch_calls = []
@@ -73,7 +78,11 @@ class FakeMessages:
     def batchModify(self, **kwargs):
         self.batch_calls.append(kwargs)
         request = MagicMock()
-        request.execute.return_value = {}
+        if self.batch_fail_at == len(self.batch_calls):
+            response = MagicMock(status=500, reason="test failure")
+            request.execute.side_effect = HttpError(response, b"test failure")
+        else:
+            request.execute.return_value = {}
         return request
 
 
@@ -135,13 +144,74 @@ class GmailApiTests(unittest.TestCase):
         messages = FakeMessages()
         service = FakeService(messages)
 
-        move_to_trash(service, message_ids)
+        moved = move_to_trash(service, message_ids)
 
+        self.assertEqual(moved, BATCH_SIZE * 2 + 1)
         self.assertEqual(len(messages.batch_calls), 3)
         self.assertEqual(
             [len(call["body"]["ids"]) for call in messages.batch_calls],
             [BATCH_SIZE, BATCH_SIZE, 1],
         )
+
+    def test_trash_reports_partial_failure(self):
+        message_ids = [str(i) for i in range(BATCH_SIZE * 2)]
+        messages = FakeMessages(batch_fail_at=2)
+        service = FakeService(messages)
+
+        with self.assertRaises(GmailMutationError) as context:
+            move_to_trash(service, message_ids)
+
+        self.assertIn(
+            "batch 2/2 after successfully moving 100 message(s)",
+            str(context.exception),
+        )
+        self.assertEqual(len(messages.batch_calls), 2)
+
+    def test_find_broad_query_terms(self):
+        self.assertEqual(
+            find_broad_query_terms("in:anywhere newer_than:1d"),
+            ["in:anywhere"],
+        )
+        self.assertEqual(
+            find_broad_query_terms("IN:ALL foo label:all"),
+            ["in:all", "label:all"],
+        )
+        self.assertEqual(
+            find_broad_query_terms("category:promotions older_than:1y"), []
+        )
+
+    def test_parse_args_rejects_broad_yes_without_override(self):
+        with self.assertRaises(SystemExit):
+            parse_args(
+                [
+                    "--query",
+                    "in:anywhere newer_than:1d",
+                    "--apply",
+                    "--yes",
+                ]
+            )
+
+    def test_parse_args_accepts_broad_yes_with_override(self):
+        args = parse_args(
+            [
+                "--query",
+                "in:anywhere newer_than:1d",
+                "--apply",
+                "--yes",
+                "--allow-broad-query",
+            ]
+        )
+        self.assertTrue(args.allow_broad_query)
+
+    def test_parse_args_rejects_broad_override_without_apply(self):
+        with self.assertRaises(SystemExit):
+            parse_args(
+                [
+                    "--query",
+                    "category:promotions",
+                    "--allow-broad-query",
+                ]
+            )
 
     def test_confirmation_requires_exact_word(self):
         with patch("builtins.input", return_value="TRASH"):
