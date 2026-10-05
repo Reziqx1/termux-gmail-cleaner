@@ -5,6 +5,7 @@ import dataclasses
 import datetime
 import email.utils as email_utils
 
+
 CATEGORY_LABELS = {
     "CATEGORY_PRIMARY": "primary",
     "CATEGORY_SOCIAL": "social",
@@ -22,7 +23,7 @@ AGE_BUCKETS = (
 )
 
 
-@dataclasses.dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class MessageObservation:
     """Normalized metadata required for mailbox analysis."""
 
