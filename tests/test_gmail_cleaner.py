@@ -1,15 +1,37 @@
+import io
+import tempfile
 import unittest
+from contextlib import redirect_stderr
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from gmail_cleaner import __version__
 from gmail_cleaner.cli import (
     BATCH_SIZE,
     _confirm_apply,
     chunked,
     fetch_metadata,
+    get_credentials,
+    main,
     move_to_trash,
     parse_args,
     search_message_ids,
 )
+
+
+def make_service():
+    messages = FakeMessages(
+        list_responses=[{"messages": [{"id": "abc"}]}],
+        metadata={
+            "payload": {
+                "headers": [
+                    {"name": "Subject", "value": "Test"},
+                    {"name": "From", "value": "Example <test@example.com>"},
+                ]
+            }
+        },
+    )
+    return messages, FakeService(messages)
 
 
 class ChunkedTests(unittest.TestCase):
@@ -131,36 +153,118 @@ class GmailApiTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             parse_args(["--query", "from:test@example.com", "--yes"])
 
-    def test_cli_version(self):
-        from gmail_cleaner.cli import VERSION, parse_args
-
+    def test_cli_version_comes_from_package(self):
+        self.assertEqual(__version__, "0.1.0")
         args = parse_args(["--query", "from:test@example.com"])
-        self.assertEqual(VERSION, "0.1.0")
         self.assertEqual(args.query, "from:test@example.com")
 
     def test_run_dry_run_never_moves_messages(self):
-        from unittest.mock import patch
-
         from gmail_cleaner.cli import run
 
-        messages = FakeMessages(
-            list_responses=[{"messages": [{"id": "abc"}]}],
-            metadata={
-                "payload": {
-                    "headers": [
-                        {"name": "Subject", "value": "Test"},
-                        {"name": "From", "value": "Example <test@example.com>"},
-                    ]
-                }
-            },
-        )
-        service = FakeService(messages)
-
+        messages, service = make_service()
         args = parse_args(["--query", "from:test@example.com"])
+
         with patch("gmail_cleaner.cli.build_service", return_value=service):
             self.assertEqual(run(args), 0)
 
         self.assertEqual(messages.batch_calls, [])
+
+    def test_run_apply_moves_after_confirmation(self):
+        from gmail_cleaner.cli import run
+
+        _, service = make_service()
+        args = parse_args(["--query", "from:test@example.com", "--apply"])
+
+        with (
+            patch("gmail_cleaner.cli.build_service", return_value=service),
+            patch("gmail_cleaner.cli._confirm_apply", return_value=True),
+            patch("gmail_cleaner.cli.move_to_trash") as move_to_trash_mock,
+        ):
+            self.assertEqual(run(args), 0)
+
+        move_to_trash_mock.assert_called_once_with(service, ["abc"])
+
+    def test_main_reports_runtime_errors(self):
+        stderr = io.StringIO()
+        with patch(
+            "gmail_cleaner.cli.build_service",
+            side_effect=RuntimeError("test failure"),
+        ):
+            with redirect_stderr(stderr):
+                self.assertEqual(main(["--query", "from:test@example.com"]), 1)
+
+        self.assertIn("Gmail operation failed: test failure", stderr.getvalue())
+
+
+class OAuthTests(unittest.TestCase):
+    def test_missing_client_file_has_clear_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            token_path = Path(tmp) / "token.json"
+            credentials_path = Path(tmp) / "credentials.json"
+
+            with self.assertRaises(FileNotFoundError) as context:
+                get_credentials(credentials_path, token_path)
+
+        self.assertIn("OAuth client file not found", str(context.exception))
+
+    def test_malformed_token_has_clear_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            token_path = Path(tmp) / "token.json"
+            credentials_path = Path(tmp) / "credentials.json"
+            token_path.write_text("not-json", encoding="utf-8")
+
+            with patch(
+                "gmail_cleaner.cli.Credentials.from_authorized_user_file",
+                side_effect=ValueError("bad token"),
+            ):
+                with self.assertRaises(RuntimeError) as context:
+                    get_credentials(credentials_path, token_path)
+
+        self.assertIn("Could not read OAuth token file", str(context.exception))
+
+    def test_refreshes_expired_credentials(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            token_path = Path(tmp) / "token.json"
+            credentials_path = Path(tmp) / "credentials.json"
+            token_path.write_text("{}", encoding="utf-8")
+
+            creds = MagicMock()
+            creds.expired = True
+            creds.refresh_token = "refresh-token"
+            creds.to_json.return_value = "{}"
+
+            with patch(
+                "gmail_cleaner.cli.Credentials.from_authorized_user_file",
+                return_value=creds,
+            ):
+                get_credentials(credentials_path, token_path)
+
+            creds.refresh.assert_called_once()
+            self.assertEqual(token_path.read_text(encoding="utf-8"), "{}")
+
+    def test_creates_new_credentials_when_token_is_absent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            token_path = Path(tmp) / "token.json"
+            credentials_path = Path(tmp) / "credentials.json"
+            credentials_path.write_text("{}", encoding="utf-8")
+
+            creds = MagicMock()
+            creds.to_json.return_value = "{}"
+            flow = MagicMock()
+            flow.run_local_server.return_value = creds
+
+            with patch(
+                "gmail_cleaner.cli.InstalledAppFlow.from_client_secrets_file",
+                return_value=flow,
+            ) as factory:
+                result = get_credentials(credentials_path, token_path)
+
+        factory.assert_called_once_with(
+            str(credentials_path),
+            ["https://www.googleapis.com/auth/gmail.modify"],
+        )
+        flow.run_local_server.assert_called_once_with(port=0, open_browser=False)
+        self.assertIs(result, creds)
 
 
 if __name__ == "__main__":
