@@ -51,7 +51,14 @@ Gmail cleanup is easy to automate badly. This project keeps the core operation s
 - A Google Cloud OAuth client configured as a desktop application
 - Gmail API enabled for the Google Cloud project
 
-### Termux setup
+### Install from source
+
+Clone the repository, then create the Termux environment:
+
+```bash
+git clone https://github.com/Reziqx1/termux-gmail-cleaner.git
+cd termux-gmail-cleaner
+```
 
 For dependencies with native components, prefer Termux's packaged builds:
 
