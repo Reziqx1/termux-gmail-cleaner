@@ -186,12 +186,14 @@ class GmailApiTests(unittest.TestCase):
 
     def test_main_reports_runtime_errors(self):
         stderr = io.StringIO()
-        with patch(
-            "gmail_cleaner.cli.build_service",
-            side_effect=RuntimeError("test failure"),
+        with (
+            patch(
+                "gmail_cleaner.cli.build_service",
+                side_effect=RuntimeError("test failure"),
+            ),
+            redirect_stderr(stderr),
         ):
-            with redirect_stderr(stderr):
-                self.assertEqual(main(["--query", "from:test@example.com"]), 1)
+            self.assertEqual(main(["--query", "from:test@example.com"]), 1)
 
         self.assertIn("Gmail operation failed: test failure", stderr.getvalue())
 
@@ -213,12 +215,14 @@ class OAuthTests(unittest.TestCase):
             credentials_path = Path(tmp) / "credentials.json"
             token_path.write_text("not-json", encoding="utf-8")
 
-            with patch(
-                "gmail_cleaner.cli.Credentials.from_authorized_user_file",
-                side_effect=ValueError("bad token"),
+            with (
+                patch(
+                    "gmail_cleaner.cli.Credentials.from_authorized_user_file",
+                    side_effect=ValueError("bad token"),
+                ),
+                self.assertRaises(RuntimeError) as context,
             ):
-                with self.assertRaises(RuntimeError) as context:
-                    get_credentials(credentials_path, token_path)
+                get_credentials(credentials_path, token_path)
 
         self.assertIn("Could not read OAuth token file", str(context.exception))
 
