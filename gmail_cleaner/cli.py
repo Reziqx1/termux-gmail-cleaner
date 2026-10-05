@@ -323,9 +323,7 @@ def run(args: argparse.Namespace) -> int:
         result = analyze_observations(
             observations,
             now=datetime.now(UTC),
-            candidate_categories=tuple(
-                args.candidate_category or ("promotions",)
-            ),
+            candidate_categories=tuple(args.candidate_category or ("promotions",)),
             candidate_older_than_days=args.candidate_older_than,
         )
         report = {
