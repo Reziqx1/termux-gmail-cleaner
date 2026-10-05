@@ -140,7 +140,7 @@ The CI runs tests and security checks automatically.
 
 ## Project status
 
-**v0.1.0 — early-stage personal project.**
+**Unreleased v0.1.0 — early-stage personal project.**
 
 The core cleanup flow is implemented, but the project has not yet been published as a packaged release. Real-device validation should be performed with a test Gmail account or carefully scoped queries before broad use.
 
