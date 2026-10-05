@@ -73,13 +73,14 @@ class MailboxAnalysis:
 def normalize_sender(raw_from: str) -> tuple[str, str]:
     """Normalize a Gmail From header into display name and lowercase address."""
     display_name, address = parseaddr(raw_from)
-    display_name = display_name.strip() or "(unknown sender)"
-    address = address.strip().lower()
+    display_name = display_name.strip()
+    address = address.strip()
 
-    if not address:
-        address = "(unknown)"
+    if "@" in address:
+        return display_name or address, address.lower()
 
-    return display_name, address
+    raw_name = raw_from.strip()
+    return raw_name or "(unknown sender)", "(unknown)"
 
 
 def categories_from_labels(label_ids: tuple[str, ...] | list[str]) -> tuple[str, ...]:
@@ -133,9 +134,7 @@ def analyze_observations(
 
         age_counts[age_bucket(item.internal_date, now)] += 1
 
-        age_days = max(
-            0, (now - item.internal_date).total_seconds() / 86400
-        )
+        age_days = max(0, (now - item.internal_date).total_seconds() / 86400)
         reasons: list[str] = []
 
         for category in categories:
