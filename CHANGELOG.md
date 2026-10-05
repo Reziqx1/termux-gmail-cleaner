@@ -1,19 +1,23 @@
 # Changelog
 
-## Unreleased
+## [Unreleased]
+
+## [0.2.0] - 2026-10-06
+
+### Added
+
+- Add a read-only Gmail metadata observer and deterministic mailbox analysis primitives.
+- Add a JSON-producing `--analyze` CLI mode with explicit review-candidate criteria.
+- Add evidence-first sender, category, and age distributions for queried messages.
 
 ### Changed
 
-- Polish repository documentation and maintainer guidance.
-- Add community health files, issue templates, pull request checks, support guidance, and citation metadata.
-- Document the v0.1 architecture, safety boundaries, and v0.2 analysis boundary.
+- Enrich review-candidate output with sender, subject, age, category, and explicit reasons for operator review.
+- Deduplicate candidate reasons and add exact-age-boundary coverage to the analysis test suite.
+- Document the v0.2 analysis boundary, validation evidence, and repository-maintainer guidance.
 - Improve package metadata and local build-artifact handling.
 - Harden interactive apply so a zero-item preview cannot be confirmed accidentally.
 - Apply owner-only permissions to existing OAuth credential files before loading them where supported.
-- Add a read-only Gmail metadata observer and deterministic mailbox analysis primitives.
-- Add a JSON-producing `--analyze` CLI mode with explicit review-candidate criteria.
-- Enrich review-candidate output with sender, subject, age, category, and explicit reasons for operator review.
-- Deduplicate candidate reasons and add exact-age-boundary coverage to the analysis test suite.
 
 ## [0.1.0] - 2026-10-05
 
