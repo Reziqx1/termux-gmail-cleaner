@@ -48,9 +48,7 @@ class ObserverTests(unittest.TestCase):
 
     def test_missing_id_is_rejected(self):
         with self.assertRaises(ValueError):
-            observation_from_resource(
-                {"threadId": "t1", "internalDate": "0"}
-            )
+            observation_from_resource({"threadId": "t1", "internalDate": "0"})
 
     def test_missing_internal_date_is_rejected(self):
         with self.assertRaises(ValueError):
