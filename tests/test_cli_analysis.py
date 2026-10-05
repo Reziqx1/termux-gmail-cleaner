@@ -26,9 +26,7 @@ class AnalyzeCliTests(unittest.TestCase):
 
     def test_parser_rejects_analysis_with_apply(self):
         with self.assertRaises(SystemExit):
-            parse_args(
-                ["--query", "category:promotions", "--analyze", "--apply"]
-            )
+            parse_args(["--query", "category:promotions", "--analyze", "--apply"])
 
     def test_parser_rejects_analysis_with_yes(self):
         with self.assertRaises(SystemExit):
