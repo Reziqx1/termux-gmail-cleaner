@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from gmail_cleaner.cli import main, parse_args
 
+
 class AnalyzeCliTests(unittest.TestCase):
     def test_parser_accepts_analysis_options(self):
         args = parse_args(
@@ -54,8 +55,10 @@ class AnalyzeCliTests(unittest.TestCase):
         }
 
         stdout = io.StringIO()
-        with patch("gmail_cleaner.cli.build_service", return_value=service):
-            with redirect_stdout(stdout):
+        with (
+            patch("gmail_cleaner.cli.build_service", return_value=service),
+            redirect_stdout(stdout),
+        ):
                 self.assertEqual(
                     main(
                         [
