@@ -253,8 +253,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     if broad_terms and args.yes and not args.allow_broad_query:
         selectors = ", ".join(broad_terms)
         raise SystemExit(
-            f"--yes with a broad query ({selectors}) requires "
-            "--allow-broad-query."
+            f"--yes with a broad query ({selectors}) requires --allow-broad-query."
         )
 
     return args
