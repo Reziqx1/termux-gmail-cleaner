@@ -257,6 +257,7 @@ v0.2.0 is the published evidence-first analysis foundation. It adds read-only ma
 - [x] Sender/category/age grouping
 - [x] Cleanup candidate reports
 - [x] Structured output for scripts
+
 ### Later
 
 - [ ] Safer batch verification/reporting
