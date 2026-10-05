@@ -242,17 +242,20 @@ class GmailApiTests(unittest.TestCase):
     def test_run_apply_moves_after_confirmation(self):
         from gmail_cleaner.cli import run
 
-        _, service = make_service()
+        messages, service = make_service()
         args = parse_args(["--query", "from:test@example.com", "--apply"])
 
         with (
             patch("gmail_cleaner.cli.build_service", return_value=service),
             patch("gmail_cleaner.cli._confirm_apply", return_value=True),
-            patch("gmail_cleaner.cli.move_to_trash") as move_to_trash_mock,
+            patch(
+                "gmail_cleaner.cli.move_to_trash", return_value=1
+            ) as move_to_trash_mock,
         ):
             self.assertEqual(run(args), 0)
 
         move_to_trash_mock.assert_called_once_with(service, ["abc"])
+        self.assertEqual(messages.batch_calls, [])
 
     def test_main_reports_runtime_errors(self):
         stderr = io.StringIO()
