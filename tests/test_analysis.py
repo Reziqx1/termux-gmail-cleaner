@@ -52,9 +52,7 @@ class AnalysisTests(unittest.TestCase):
 
     def test_categories_extract_known_labels_only(self):
         self.assertEqual(
-            categories_from_labels(
-                ("INBOX", "CATEGORY_SOCIAL", "CATEGORY_PROMOTIONS")
-            ),
+            categories_from_labels(("INBOX", "CATEGORY_SOCIAL", "CATEGORY_PROMOTIONS")),
             ("social", "promotions"),
         )
 
