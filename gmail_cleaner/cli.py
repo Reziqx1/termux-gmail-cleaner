@@ -24,7 +24,7 @@ DEFAULT_MAX_RESULTS = 50
 DEFAULT_PREVIEW = 20
 BATCH_SIZE = 100
 BROAD_QUERY_PATTERN = re.compile(
-    r"(?<!\\S)(?:in:anywhere|in:all|label:all)(?!\\S)",
+    r"(?<!\S)(?:in:anywhere|in:all|label:all)(?!\S)",
     re.IGNORECASE,
 )
 
@@ -35,7 +35,9 @@ class GmailMutationError(RuntimeError):
 
 def find_broad_query_terms(query: str) -> list[str]:
     """Return broad Gmail selectors that deserve extra scrutiny before applying."""
-    return sorted(set(match.group(0).lower() for match in BROAD_QUERY_PATTERN.finditer(query)))
+    return sorted(
+        set(match.group(0).lower() for match in BROAD_QUERY_PATTERN.finditer(query))
+    )
 
 
 def chunked(items: Sequence[str], size: int) -> Iterable[list[str]]:
