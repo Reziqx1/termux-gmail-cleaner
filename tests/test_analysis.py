@@ -1,0 +1,144 @@
+import unittest
+from datetime import datetime, timedelta, timezone
+
+from gmail_cleaner.analysis import (
+    MessageObservation,
+    age_bucket,
+    analyze_observations,
+    categories_from_labels,
+    gmail_internal_date_to_datetime,
+    normalize_sender,
+)
+
+
+class AnalysisTests(unittest.TestCase):
+    NOW = datetime(2026, 10, 5, 12, tzinfo=timezone.utc)
+
+    def make_message(
+        self,
+        *,
+        message_id="m1",
+        sender_email="news@example.com",
+        age_days=200,
+        label_ids=("CATEGORY_PROMOTIONS",),
+    ):
+        return MessageObservation(
+            message_id=message_id,
+            thread_id=f"t-{message_id}",
+            sender_name="Example",
+            sender_email=sender_email,
+            subject="Example subject",
+            internal_date=self.NOW - timedelta(days=age_days),
+            label_ids=tuple(label_ids),
+        )
+
+    def test_normalize_sender(self):
+        self.assertEqual(
+            normalize_sender("Example News <NEWS@Example.com>"),
+            ("Example News", "news@example.com"),
+        )
+
+    def test_normalize_sender_without_name(self):
+        self.assertEqual(
+            normalize_sender("NEWS@Example.com"),
+            ("NEWS@Example.com", "news@example.com"),
+        )
+
+    def test_normalize_sender_without_address(self):
+        self.assertEqual(
+            normalize_sender("Unknown Sender"),
+            ("Unknown Sender", "(unknown)"),
+        )
+
+    def test_categories_extract_known_labels_only(self):
+        self.assertEqual(
+            categories_from_labels(
+                ("INBOX", "CATEGORY_SOCIAL", "CATEGORY_PROMOTIONS")
+            ),
+            ("social", "promotions"),
+        )
+
+    def test_age_bucket_uses_aware_datetimes(self):
+        self.assertEqual(
+            age_bucket(self.NOW - timedelta(days=10), self.NOW),
+            "7-30d",
+        )
+        self.assertEqual(
+            age_bucket(self.NOW - timedelta(days=400), self.NOW),
+            "365d+",
+        )
+
+    def test_age_bucket_rejects_naive_datetime(self):
+        with self.assertRaises(ValueError):
+            age_bucket(datetime(2026, 1, 1), self.NOW)
+
+    def test_gmail_internal_date_conversion(self):
+        dt = gmail_internal_date_to_datetime("0")
+        self.assertEqual(dt, datetime(1970, 1, 1, tzinfo=timezone.utc))
+
+    def test_analysis_is_deterministic_and_structured(self):
+        observations = [
+            self.make_message(message_id="m1", age_days=200),
+            self.make_message(
+                message_id="m2",
+                sender_email="other@example.com",
+                age_days=20,
+                label_ids=("CATEGORY_PRIMARY",),
+            ),
+            self.make_message(
+                message_id="m3",
+                sender_email="news@example.com",
+                age_days=400,
+                label_ids=("CATEGORY_PROMOTIONS",),
+            ),
+        ]
+
+        result = analyze_observations(
+            observations,
+            now=self.NOW,
+            candidate_older_than_days=180,
+        )
+
+        self.assertEqual(result.total_messages, 3)
+        self.assertEqual(result.sender_counts["news@example.com"], 2)
+        self.assertEqual(result.category_counts["promotions"], 2)
+        self.assertEqual(result.category_counts["primary"], 1)
+        self.assertEqual(result.age_bucket_counts["180-365d"], 1)
+        self.assertEqual(result.age_bucket_counts["365d+"], 1)
+        self.assertEqual(
+            result.candidates,
+            (
+                result.candidates[0],
+                result.candidates[1],
+            ),
+        )
+        self.assertEqual(
+            result.candidates[0].reasons,
+            ("age:180d+", "category:promotions"),
+        )
+        self.assertEqual(result.to_dict()["candidates"][0]["message_id"], "m1")
+
+    def test_analysis_does_not_candidate_old_primary_mail(self):
+        result = analyze_observations(
+            [self.make_message(label_ids=("CATEGORY_PRIMARY",), age_days=500)],
+            now=self.NOW,
+        )
+        self.assertEqual(result.candidates, ())
+
+    def test_analysis_supports_empty_input(self):
+        result = analyze_observations([], now=self.NOW)
+        self.assertEqual(result.total_messages, 0)
+        self.assertEqual(result.sender_counts, {})
+        self.assertEqual(result.candidates, ())
+
+    def test_analysis_rejects_invalid_candidate_age(self):
+        with self.assertRaises(ValueError):
+            analyze_observations(
+                [],
+                now=self.NOW,
+                candidate_older_than_days=-1,
+            )
+
+
+if __name__ == "__main__":
+    unittest.main()
