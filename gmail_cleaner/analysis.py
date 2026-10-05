@@ -1,7 +1,6 @@
 """Pure, read-only mailbox analysis primitives for v0.2."""
 
 import email.utils
-
 from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, datetime
