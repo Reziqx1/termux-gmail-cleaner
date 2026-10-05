@@ -10,6 +10,7 @@ from collections.abc import Iterable, Sequence
 from typing import Any
 
 from google.auth.transport.requests import Request
+from google.auth.exceptions import GoogleAuthError
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -265,7 +266,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     except FileNotFoundError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
-    except (RuntimeError, HttpError) as exc:
+    except (RuntimeError, GoogleAuthError, HttpError) as exc:
         print(f"error: Gmail operation failed: {exc}", file=sys.stderr)
         return 1
 
