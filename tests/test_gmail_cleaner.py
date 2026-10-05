@@ -223,6 +223,29 @@ class GmailApiTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             parse_args(["--query", "from:test@example.com", "--yes"])
 
+    def test_parse_args_rejects_empty_apply_preview_without_yes(self):
+        with self.assertRaises(SystemExit):
+            parse_args(
+                [
+                    "--query",
+                    "from:test@example.com",
+                    "--apply",
+                    "--preview",
+                    "0",
+                ]
+            )
+
+    def test_parse_args_allows_empty_preview_for_dry_run(self):
+        args = parse_args(
+            [
+                "--query",
+                "from:test@example.com",
+                "--preview",
+                "0",
+            ]
+        )
+        self.assertEqual(args.preview, 0)
+
     def test_cli_version_comes_from_package(self):
         self.assertEqual(__version__, "0.1.0")
         args = parse_args(["--query", "from:test@example.com"])
@@ -272,6 +295,27 @@ class GmailApiTests(unittest.TestCase):
 
 
 class OAuthTests(unittest.TestCase):
+    def test_secure_permissions_are_applied_to_existing_token(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            token_path = Path(tmp) / "token.json"
+            credentials_path = Path(tmp) / "credentials.json"
+            token_path.write_text("{}", encoding="utf-8")
+
+            creds = MagicMock()
+            creds.valid = True
+            creds.expired = False
+            creds.to_json.return_value = "{}"
+
+            with patch(
+                "gmail_cleaner.cli.Credentials.from_authorized_user_file",
+                return_value=creds,
+            ), patch(
+                "gmail_cleaner.cli._secure_permissions"
+            ) as permissions:
+                get_credentials(credentials_path, token_path)
+
+            permissions.assert_any_call(token_path)
+
     def test_missing_client_file_has_clear_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             token_path = Path(tmp) / "token.json"
