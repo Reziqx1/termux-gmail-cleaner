@@ -10,3 +10,10 @@ token.json
 gmail_credentials.json
 gmail_token.json
 .DS_Store
+
+# Additional credential and local-secret patterns
+client_secret*.json
+google-oauth*.json
+*.pem
+*.p12
+.secrets/
