@@ -5,11 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
-
 import re
 import sys
-from datetime import UTC, datetime
 from collections.abc import Iterable, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -319,9 +318,6 @@ def run(args: argparse.Namespace) -> int:
     service = build_service(args.credentials, args.token)
     message_ids = search_message_ids(service, args.query, args.max_results)
 
-    print(f"Query: {args.query}")
-    print(f"Matched: {len(message_ids)} message(s)")
-
     if args.analyze:
         observations = fetch_observations(service, message_ids)
         result = analyze_observations(
@@ -332,9 +328,16 @@ def run(args: argparse.Namespace) -> int:
             ),
             candidate_older_than_days=args.candidate_older_than,
         )
-        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        report = {
+            "query": args.query,
+            "matched": len(message_ids),
+            "analysis": result.to_dict(),
+        }
+        print(json.dumps(report, indent=2, sort_keys=True))
         return 0
 
+    print(f"Query: {args.query}")
+    print(f"Matched: {len(message_ids)} message(s)")
     print(f"Mode: {'APPLY' if args.apply else 'DRY RUN'}")
 
     for message_id in message_ids[: args.preview]:
