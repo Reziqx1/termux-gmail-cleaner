@@ -248,7 +248,9 @@ class GmailApiTests(unittest.TestCase):
         with (
             patch("gmail_cleaner.cli.build_service", return_value=service),
             patch("gmail_cleaner.cli._confirm_apply", return_value=True),
-            patch("gmail_cleaner.cli.move_to_trash") as move_to_trash_mock,
+            patch(
+                "gmail_cleaner.cli.move_to_trash", return_value=1
+            ) as move_to_trash_mock,
         ):
             self.assertEqual(run(args), 0)
 
