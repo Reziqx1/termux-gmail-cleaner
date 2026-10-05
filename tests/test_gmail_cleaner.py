@@ -247,7 +247,7 @@ class GmailApiTests(unittest.TestCase):
         self.assertEqual(args.preview, 0)
 
     def test_cli_version_comes_from_package(self):
-        self.assertEqual(__version__, "0.1.0")
+        self.assertEqual(__version__, "0.2.0")
         args = parse_args(["--query", "from:test@example.com"])
         self.assertEqual(args.query, "from:test@example.com")
 
