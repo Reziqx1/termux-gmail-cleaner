@@ -157,9 +157,9 @@ The CI runs tests and security checks automatically.
 
 ## Project status
 
-**Unreleased v0.1.0 — early-stage personal project.**
+**v0.1.0 — release candidate.**
 
-The core cleanup flow has been validated against a real Gmail account on Android/Termux, including OAuth, read-only dry run, and a one-message Trash mutation test. The project has not yet been published as a packaged release; continue using narrowly scoped queries until the release hardening pass is complete.
+The core cleanup flow has been validated against a real Gmail account on Android/Termux, including OAuth, read-only dry run, and a one-message Trash mutation test. The v0.1.0 release is ready to be tagged after the final CI gate. Continue using narrowly scoped queries for real cleanup.
 
 ## Roadmap
 
@@ -169,7 +169,7 @@ The core cleanup flow has been validated against a real Gmail account on Android
 - [x] Add unit tests around OAuth and failure paths
 - [x] Update CI to test supported Python versions
 - [x] Validate the CLI on a real Termux installation
-- [ ] Publish a first tagged release after real-device validation
+- [ ] Publish the v0.1.0 tagged release
 
 ## License
 
