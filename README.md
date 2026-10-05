@@ -239,27 +239,27 @@ The project has been validated on a real Android/Termux environment with:
 - real Gmail `--analyze` runs returning structured JSON without mutations
 - CI test matrix passing on Python 3.11–3.14
 - dependency security audit passing on the merged v0.2 commit
+- GitHub Release **v0.2.0** published from `main` at commit `fe1eca4609393ea2e860ae195cff164c9a2a3c13`
 
 These checks establish that the core workflow works; they are not a guarantee that every Gmail query is safe. Query scope remains the operator's responsibility.
 
 ## Project status
 
-**v0.2.0 — release candidate in preparation.**
+**v0.2.0 — released.**
 
-The v0.1 series is the stable safety-first mutation foundation. The v0.2 series adds read-only mailbox analysis, transparent candidate reporting, and structured evidence before any broader automation.
+v0.2.0 is the published evidence-first analysis foundation. It adds read-only mailbox analysis, transparent candidate reporting, and structured evidence before any broader automation. The next roadmap work is planned for v0.3.
 
 ## Roadmap
 
-### v0.2 — Analysis
+### v0.2 — Analysis (complete)
 
 - [x] Lightweight mailbox scan
 - [x] Sender/category/age grouping
 - [x] Cleanup candidate reports
 - [x] Structured output for scripts
-- [ ] Safer batch verification/reporting
-
 ### Later
 
+- [ ] Safer batch verification/reporting
 - [ ] Reusable cleanup presets
 - [ ] Better operator-facing reports
 - [ ] Additional portability improvements
