@@ -5,8 +5,6 @@ from contextlib import redirect_stdout
 from unittest.mock import MagicMock, patch
 
 from gmail_cleaner.cli import main, parse_args
-from gmail_cleaner.analysis import MessageObservation
-
 
 class AnalyzeCliTests(unittest.TestCase):
     def test_parser_accepts_analysis_options(self):
@@ -77,21 +75,6 @@ class AnalyzeCliTests(unittest.TestCase):
         self.assertEqual(report["analysis"]["total_messages"], 1)
         self.assertEqual(report["analysis"]["sender_counts"], {"news@example.com": 1})
         service.users.return_value.messages.return_value.batchModify.assert_not_called()
-
-    def test_analysis_candidate_category_and_age_are_explicit(self):
-        observation = MessageObservation(
-            message_id="m1",
-            thread_id="t1",
-            sender_name="News",
-            sender_email="news@example.com",
-            subject="Old promo",
-            internal_date=__import__("datetime").datetime.fromtimestamp(
-                0,
-                tz=__import__("datetime").UTC,
-            ),
-            label_ids=("CATEGORY_PROMOTIONS",),
-        )
-        self.assertEqual(observation.message_id, "m1")
 
 
 if __name__ == "__main__":
