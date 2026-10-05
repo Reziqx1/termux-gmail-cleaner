@@ -1,1 +1,0 @@
-"""Termux Gmail Cleaner package."""
