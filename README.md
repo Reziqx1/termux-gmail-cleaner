@@ -40,6 +40,7 @@ Gmail cleanup is easy to automate badly. This project keeps the core operation s
 - Bounded Trash batches of 100 messages
 - Partial-batch failure reporting
 - Credential handling and refresh
+- Read-only mailbox analysis with transparent candidate reporting
 - Unit tests across Python 3.11–3.14
 - GitHub Actions test and dependency-audit workflows
 - Dependabot for Python and GitHub Actions dependencies
@@ -233,25 +234,26 @@ The project has been validated on a real Android/Termux environment with:
 - real Gmail read-only dry runs
 - a one-message disposable Trash mutation
 - verification that the test message appeared in Trash and disappeared from Inbox
-- **43 unit tests passing locally** after the merged v0.2 foundation
+- **44 unit tests passing locally after the v0.2 candidate-reporting refinement**
+- deterministic candidate-reporting proof producing the expected candidate structure
 - real Gmail `--analyze` runs returning structured JSON without mutations
 - CI test matrix passing on Python 3.11–3.14
-- dependency security audit passing
+- dependency security audit passing on the merged v0.2 commit
 
 These checks establish that the core workflow works; they are not a guarantee that every Gmail query is safe. Query scope remains the operator's responsibility.
 
 ## Project status
 
-**v0.1.0 — released; v0.2 analysis is in development.**
+**v0.2.0 — release candidate in preparation.**
 
-The v0.1 series is the stable safety-first mutation foundation. The v0.2 series adds read-only mailbox analysis and reporting before any broader automation.
+The v0.1 series is the stable safety-first mutation foundation. The v0.2 series adds read-only mailbox analysis, transparent candidate reporting, and structured evidence before any broader automation.
 
 ## Roadmap
 
 ### v0.2 — Analysis
 
-- [ ] Lightweight mailbox scan
-- [ ] Sender/category/age grouping
+- [x] Lightweight mailbox scan
+- [x] Sender/category/age grouping
 - [x] Cleanup candidate reports
 - [x] Structured output for scripts
 - [ ] Safer batch verification/reporting
