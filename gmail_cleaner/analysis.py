@@ -23,7 +23,7 @@ AGE_BUCKETS = (
 )
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclasses.dataclass(frozen=True)
 class MessageObservation:
     """Normalized metadata required for mailbox analysis."""
 
@@ -36,7 +36,7 @@ class MessageObservation:
     label_ids: tuple[str, ...]
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class ReviewCandidate:
     """A review signal, never an instruction to mutate Gmail."""
 
@@ -44,7 +44,7 @@ class ReviewCandidate:
     reasons: tuple[str, ...]
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class MailboxAnalysis:
     """Deterministic aggregate analysis result."""
 
@@ -118,8 +118,8 @@ def analyze_observations(
         raise ValueError("candidate_older_than_days cannot be negative")
 
     sender_counts = collections.Counter(item.sender_email for item in observations)
-    category_counts: collections.Counter[str] = Counter()
-    age_counts: collections.Counter[str] = Counter()
+    category_counts: collections.Counter[str] = collections.Counter()
+    age_counts: collections.Counter[str] = collections.Counter()
     candidates: list[ReviewCandidate] = []
     wanted_categories = set(candidate_categories)
 
