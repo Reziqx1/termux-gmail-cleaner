@@ -21,3 +21,5 @@ For a suspected security problem, contact the repository owner privately through
 ## Safety model
 
 The CLI is dry-run by default and only moves messages to Trash when `--apply` is provided. Permanent deletion is intentionally not implemented.
+
+Apply mode warns when broad Gmail selectors such as `in:anywhere` are present. Non-interactive `--yes` mode requires an explicit `--allow-broad-query` opt-in for those selectors.
