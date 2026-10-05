@@ -25,6 +25,7 @@ This file records the quality baseline for the repository so future changes can 
 - [x] Real Gmail dry-run validation completed.
 - [x] One-message Trash mutation and post-mutation verification completed.
 - [x] Permanent deletion is not implemented.
+- [x] Interactive apply requires a visible preview item.
 
 ## Current engineering boundary
 
