@@ -99,6 +99,18 @@ gmail-cleaner --query 'category:promotions older_than:1y'
 
 No Gmail changes are made.
 
+### Analyze (read-only)
+
+v0.2 adds an evidence-first mailbox analysis mode. It never mutates Gmail:
+
+```bash
+gmail-cleaner --query 'category:promotions newer_than:1y' --analyze
+```
+
+The command prints structured JSON containing sender/category/age distributions and transparent review candidates. By default, a candidate must match the selected category and be at least 180 days old. Change the threshold or category explicitly with `--candidate-older-than` and `--candidate-category`.
+
+Analysis uses lightweight Gmail metadata only; it does not download message bodies or attachments.
+
 ### Apply
 
 ```bash

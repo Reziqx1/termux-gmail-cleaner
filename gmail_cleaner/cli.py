@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import sys
 from collections.abc import Iterable, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +20,8 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from . import __version__
+from .analysis import analyze_observations
+from .observer import fetch_observations
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
 DEFAULT_MAX_RESULTS = 50
@@ -234,6 +238,23 @@ def build_parser() -> argparse.ArgumentParser:
             "in:anywhere. Review the query carefully before using this."
         ),
     )
+    parser.add_argument(
+        "--analyze",
+        action="store_true",
+        help="Perform a read-only metadata analysis and print JSON.",
+    )
+    parser.add_argument(
+        "--candidate-category",
+        action="append",
+        default=None,
+        help="Category to consider for review candidates (default: promotions).",
+    )
+    parser.add_argument(
+        "--candidate-older-than",
+        type=int,
+        default=180,
+        help="Minimum age in days for review candidates (default: 180).",
+    )
     return parser
 
 
@@ -262,6 +283,15 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     if args.allow_broad_query and not args.apply:
         raise SystemExit("--allow-broad-query requires --apply.")
 
+    if args.analyze and args.apply:
+        raise SystemExit("--analyze cannot be combined with --apply.")
+
+    if args.analyze and args.yes:
+        raise SystemExit("--analyze is read-only; --yes is not applicable.")
+
+    if args.candidate_older_than < 0:
+        raise SystemExit("--candidate-older-than cannot be negative.")
+
     broad_terms = find_broad_query_terms(args.query)
     if broad_terms and args.yes and not args.allow_broad_query:
         selectors = ", ".join(broad_terms)
@@ -287,6 +317,22 @@ def run(args: argparse.Namespace) -> int:
     """Execute the requested cleanup operation."""
     service = build_service(args.credentials, args.token)
     message_ids = search_message_ids(service, args.query, args.max_results)
+
+    if args.analyze:
+        observations = fetch_observations(service, message_ids)
+        result = analyze_observations(
+            observations,
+            now=datetime.now(UTC),
+            candidate_categories=tuple(args.candidate_category or ("promotions",)),
+            candidate_older_than_days=args.candidate_older_than,
+        )
+        report = {
+            "query": args.query,
+            "matched": len(message_ids),
+            "analysis": result.to_dict(),
+        }
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return 0
 
     print(f"Query: {args.query}")
     print(f"Matched: {len(message_ids)} message(s)")

@@ -10,6 +10,8 @@
 - Improve package metadata and local build-artifact handling.
 - Harden interactive apply so a zero-item preview cannot be confirmed accidentally.
 - Apply owner-only permissions to existing OAuth credential files before loading them where supported.
+- Add a read-only Gmail metadata observer and deterministic mailbox analysis primitives.
+- Add a JSON-producing `--analyze` CLI mode with explicit review-candidate criteria.
 
 ## [0.1.0] - 2026-10-05
 
