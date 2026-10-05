@@ -5,8 +5,8 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from pathlib import Path
 from collections.abc import Iterable, Sequence
+from pathlib import Path
 from typing import Any
 
 from google.auth.transport.requests import Request
