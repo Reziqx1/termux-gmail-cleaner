@@ -306,12 +306,13 @@ class OAuthTests(unittest.TestCase):
             creds.expired = False
             creds.to_json.return_value = "{}"
 
-            with patch(
-                "gmail_cleaner.cli.Credentials.from_authorized_user_file",
-                return_value=creds,
-            ), patch(
-                "gmail_cleaner.cli._secure_permissions"
-            ) as permissions:
+            with (
+                patch(
+                    "gmail_cleaner.cli.Credentials.from_authorized_user_file",
+                    return_value=creds,
+                ),
+                patch("gmail_cleaner.cli._secure_permissions") as permissions,
+            ):
                 get_credentials(credentials_path, token_path)
 
             permissions.assert_any_call(token_path)
