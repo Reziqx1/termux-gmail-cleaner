@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Polish repository documentation and maintainer guidance.
+- Add community health files, issue templates, pull request checks, support guidance, and citation metadata.
+- Document the v0.1 architecture, safety boundaries, and v0.2 analysis boundary.
+- Improve package metadata and local build-artifact handling.
+
 ## [0.1.0] - 2026-10-05
 
 ### Added
