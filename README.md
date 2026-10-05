@@ -33,7 +33,7 @@ The design principle is:
 ## Requirements
 
 - Android + Termux
-- Python 3.10+
+- Python 3.11–3.14
 - A Google Cloud OAuth client for a desktop application
 - Gmail API enabled for the account/project
 
@@ -148,8 +148,9 @@ The core cleanup flow is implemented, but the project has not yet been published
 
 - [ ] Add safer batch verification/reporting
 - [ ] Add optional structured output for scripts
-- [ ] Add more unit tests around OAuth and failure paths
-- [ ] Validate the CLI on current Termux/Python versions
+- [x] Add unit tests around OAuth and failure paths
+- [x] Update CI to test supported Python versions
+- [ ] Validate the CLI on a real Termux installation
 - [ ] Publish a first tagged release after real-device validation
 
 ## License
