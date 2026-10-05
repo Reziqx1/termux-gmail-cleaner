@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use Termux Gmail Cleaner, please cite this software."
+title: "Termux Gmail Cleaner"
+version: 0.1.0
+date-released: 2026-10-05
+authors:
+  - family-names: "Rez"
+    given-names: "Rez"
+repository-code: "https://github.com/Reziqx1/termux-gmail-cleaner"
+url: "https://github.com/Reziqx1/termux-gmail-cleaner"
+license: "MIT"
+keywords:
+  - Gmail
+  - Termux
+  - Android
+  - automation
+  - Python
