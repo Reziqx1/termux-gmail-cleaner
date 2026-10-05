@@ -6,10 +6,6 @@ from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from collections import Counter
-from dataclasses import dataclass
-from datetime import UTC, datetime
-
 
 CATEGORY_LABELS = {
     "CATEGORY_PRIMARY": "primary",
