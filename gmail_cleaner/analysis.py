@@ -1,9 +1,14 @@
 """Pure, read-only mailbox analysis primitives for v0.2."""
 
+import email.utils
+
 from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from email.utils import parseaddr
+
+from collections import Counter
+from dataclasses import dataclass
+from datetime import UTC, datetime
 
 
 CATEGORY_LABELS = {
@@ -70,7 +75,7 @@ class MailboxAnalysis:
 
 def normalize_sender(raw_from: str) -> tuple[str, str]:
     """Normalize a Gmail From header into display name and lowercase address."""
-    display_name, address = parseaddr(raw_from)
+    display_name, address = email.utils.parseaddr(raw_from)
     display_name = display_name.strip()
     address = address.strip()
 
