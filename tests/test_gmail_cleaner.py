@@ -305,8 +305,9 @@ class GmailApiTests(unittest.TestCase):
             },
             {"labelIds": ["INBOX"]},
         ]
-        service.users.return_value.messages.return_value.batchModify.return_value.execute.side_effect = (
-            ConnectionAbortedError(103, "Software caused connection abort")
+        service.users.return_value.messages.return_value.batchModify.return_value.execute.side_effect = ConnectionAbortedError(
+            103,
+            "Software caused connection abort",
         )
 
         args = parse_args(["--query", "from:test@example.com", "--apply"])
