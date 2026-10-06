@@ -25,9 +25,11 @@ class PresetTests(unittest.TestCase):
             self.assertEqual(list_presets(directory), ["old-promotions"])
 
     def test_invalid_preset_name_fails_closed(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaises(ValueError):
-                preset_path("../unsafe", Path(tmp))
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            self.assertRaises(ValueError),
+        ):
+            preset_path("../unsafe", Path(tmp))
 
     def test_unknown_field_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
