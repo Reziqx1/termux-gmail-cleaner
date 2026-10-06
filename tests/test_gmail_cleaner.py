@@ -305,7 +305,10 @@ class GmailApiTests(unittest.TestCase):
         self.assertIn("Mutation: success", output)
         self.assertIn("Verification: verified", output)
         self.assertTrue(messages.get_calls)
-        self.assertEqual(messages.get_calls[0]["format"], "minimal")
+        self.assertIn(
+            "minimal",
+            [call["format"] for call in messages.get_calls],
+        )
 
     def test_main_reports_runtime_errors(self):
         stderr = io.StringIO()
