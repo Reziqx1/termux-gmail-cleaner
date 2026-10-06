@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import os
 import re
 import sys
 from collections.abc import Iterable, Sequence
@@ -22,8 +21,8 @@ from . import __version__
 from .analysis import analyze_observations
 from .mutation import move_to_trash_detailed
 from .observer import fetch_observations
+from .paths import credentials_path, preset_dir, token_path
 from .presets import (
-    DEFAULT_PRESET_DIR,
     list_presets,
     load_preset,
     preset_to_toml,
@@ -207,13 +206,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--credentials",
         type=Path,
-        default=Path(os.environ.get("GMAIL_CREDENTIALS", "credentials.json")),
+        default=None,
         help="OAuth client JSON path.",
     )
     parser.add_argument(
         "--token",
         type=Path,
-        default=Path(os.environ.get("GMAIL_TOKEN", "token.json")),
+        default=None,
         help="OAuth token JSON path.",
     )
     parser.add_argument(
@@ -264,7 +263,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--preset-dir",
         type=Path,
-        default=DEFAULT_PRESET_DIR,
+        default=None,
         help="Directory containing local presets.",
     )
     parser.add_argument(
@@ -282,6 +281,10 @@ def build_parser() -> argparse.ArgumentParser:
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     """Parse, load optional presets, and validate CLI arguments."""
     args = build_parser().parse_args(argv)
+
+    args.credentials = credentials_path(args.credentials)
+    args.token = token_path(args.token)
+    args.preset_dir = preset_dir(args.preset_dir)
 
     if args.list_presets and (args.preset or args.show_preset):
         raise SystemExit(
