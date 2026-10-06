@@ -282,6 +282,26 @@ class GmailApiTests(unittest.TestCase):
         self.assertEqual(len(messages.batch_calls), 1)
         self.assertEqual(messages.batch_calls[0]["body"]["ids"], ["abc"])
 
+    def test_run_apply_reports_verified_trash_state(self):
+        from gmail_cleaner.cli import run
+
+        messages, service = make_service()
+        args = parse_args(["--query", "from:test@example.com", "--apply"])
+        stdout = io.StringIO()
+
+        with (
+            patch("gmail_cleaner.cli.build_service", return_value=service),
+            patch("gmail_cleaner.cli._confirm_apply", return_value=True),
+            redirect_stdout(stdout),
+        ):
+            self.assertEqual(run(args), 0)
+
+        output = stdout.getvalue()
+        self.assertIn("Mutation: success", output)
+        self.assertIn("Verification: verified", output)
+        self.assertTrue(messages.get_calls)
+        self.assertEqual(messages.get_calls[0]["format"], "minimal")
+
     def test_main_reports_runtime_errors(self):
         stderr = io.StringIO()
         with (
