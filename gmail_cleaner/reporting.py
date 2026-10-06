@@ -50,7 +50,7 @@ def build_cleanup_report(
     not_verified_count = sum(item.state == "not-verified" for item in verification)
     error_count = sum(item.state == "verification-error" for item in verification)
 
-    if not execution.moved_ids:
+    if not verification:
         verification_status = "not-run"
     elif error_count == len(verification):
         verification_status = "verification-error"

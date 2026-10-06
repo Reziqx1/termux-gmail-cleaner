@@ -37,7 +37,7 @@ def verify_trashed(
                 )
                 .execute()
             )
-        except HttpError as exc:
+        except (HttpError, OSError) as exc:
             results.append(
                 VerificationResult(
                     message_id=message_id,

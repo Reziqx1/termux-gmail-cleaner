@@ -287,6 +287,44 @@ class GmailApiTests(unittest.TestCase):
         self.assertEqual(len(messages.batch_calls), 1)
         self.assertEqual(messages.batch_calls[0]["body"]["ids"], ["abc"])
 
+    def test_run_apply_handles_transport_failure_with_report(self):
+        from gmail_cleaner.cli import run
+
+        service = MagicMock()
+        service.users.return_value.messages.return_value.list.return_value.execute.return_value = {
+            "messages": [{"id": "abc"}]
+        }
+        service.users.return_value.messages.return_value.get.return_value.execute.side_effect = [
+            {
+                "payload": {
+                    "headers": [
+                        {"name": "Subject", "value": "Test"},
+                        {"name": "From", "value": "Example <test@example.com>"},
+                    ]
+                }
+            },
+            {"labelIds": ["INBOX"]},
+        ]
+        service.users.return_value.messages.return_value.batchModify.return_value.execute.side_effect = ConnectionAbortedError(
+            103,
+            "Software caused connection abort",
+        )
+
+        args = parse_args(["--query", "from:test@example.com", "--apply"])
+        stdout = io.StringIO()
+
+        with (
+            patch("gmail_cleaner.cli.build_service", return_value=service),
+            patch("gmail_cleaner.cli._confirm_apply", return_value=True),
+            redirect_stdout(stdout),
+        ):
+            self.assertEqual(run(args), 1)
+
+        output = stdout.getvalue()
+        self.assertIn("Mutation: failed", output)
+        self.assertIn("Verification: incomplete", output)
+        self.assertIn("1 not verified", output)
+
     def test_run_apply_reports_verified_trash_state(self):
         from gmail_cleaner.cli import run
 

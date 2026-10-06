@@ -435,7 +435,10 @@ def run(args: argparse.Namespace) -> int:
         return 0
 
     execution = move_to_trash_detailed(service, message_ids)
-    verification = verify_trashed(service, execution.moved_ids)
+    verification_ids = (
+        execution.attempted_ids if execution.failed else execution.moved_ids
+    )
+    verification = verify_trashed(service, verification_ids)
     report = build_cleanup_report(
         query=args.query,
         matched=len(message_ids),
