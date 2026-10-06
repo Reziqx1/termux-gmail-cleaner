@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from googleapiclient.errors import GoogleAPICallError
+from googleapiclient.errors import HttpError
 
 
 @dataclass(frozen=True)
@@ -37,7 +37,7 @@ def verify_trashed(
                 )
                 .execute()
             )
-        except GoogleAPICallError as exc:
+        except HttpError as exc:
             results.append(
                 VerificationResult(
                     message_id=message_id,
