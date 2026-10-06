@@ -86,6 +86,8 @@ Configuration and credential paths are resolved with this precedence:
 **explicit CLI path → environment override → application config directory**.
 The default application config directory is `~/.config/gmail-cleaner`. The same portable resolver is used for local presets.
 
+For backward compatibility, an existing `credentials.json` or `token.json` in the working directory is still recognized when no explicit config-directory override is set. New installations should prefer the application config directory or explicit environment variables.
+
 ```bash
 export GMAIL_CREDENTIALS="$HOME/.config/gmail-cleaner/credentials.json"
 export GMAIL_TOKEN="$HOME/.config/gmail-cleaner/token.json"
