@@ -70,11 +70,11 @@ class PathResolutionTests(unittest.TestCase):
                 ):
                     self.assertEqual(
                         credentials_path(),
-                        Path("~/custom/gmail-cleaner/credentials.json").expanduser(),
+                        Path("~/custom/credentials.json").expanduser(),
                     )
                     self.assertEqual(
                         token_path(),
-                        Path("~/custom/gmail-cleaner/token.json").expanduser(),
+                        Path("~/custom/token.json").expanduser(),
                     )
             finally:
                 os.chdir(original)
