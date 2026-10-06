@@ -26,16 +26,58 @@ class PathResolutionTests(unittest.TestCase):
                 Path("~/custom/gmail-cleaner").expanduser(),
             )
 
-    def test_credentials_and_token_use_config_defaults(self):
-        with patch.dict(os.environ, {}, clear=True):
-            self.assertEqual(
-                credentials_path(),
-                Path.home() / ".config" / "gmail-cleaner" / "credentials.json",
-            )
-            self.assertEqual(
-                token_path(),
-                Path.home() / ".config" / "gmail-cleaner" / "token.json",
-            )
+    def test_credentials_and_token_use_config_defaults_when_no_legacy_files_exist(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            original = Path.cwd()
+            os.chdir(tmp)
+            try:
+                with patch.dict(os.environ, {}, clear=True):
+                    self.assertEqual(
+                        credentials_path(),
+                        Path.home() / ".config" / "gmail-cleaner" / "credentials.json",
+                    )
+                    self.assertEqual(
+                        token_path(),
+                        Path.home() / ".config" / "gmail-cleaner" / "token.json",
+                    )
+            finally:
+                os.chdir(original)
+
+    def test_existing_legacy_credentials_are_used_for_compatibility(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            original = Path.cwd()
+            os.chdir(tmp)
+            try:
+                Path("credentials.json").write_text("{}", encoding="utf-8")
+                Path("token.json").write_text("{}", encoding="utf-8")
+                with patch.dict(os.environ, {}, clear=True):
+                    self.assertEqual(credentials_path(), Path("credentials.json"))
+                    self.assertEqual(token_path(), Path("token.json"))
+            finally:
+                os.chdir(original)
+
+    def test_config_dir_override_disables_legacy_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            original = Path.cwd()
+            os.chdir(tmp)
+            try:
+                Path("credentials.json").write_text("{}", encoding="utf-8")
+                Path("token.json").write_text("{}", encoding="utf-8")
+                with patch.dict(
+                    os.environ,
+                    {"GMAIL_CLEANER_CONFIG_DIR": "~/custom"},
+                    clear=True,
+                ):
+                    self.assertEqual(
+                        credentials_path(),
+                        Path("~/custom/credentials.json").expanduser(),
+                    )
+                    self.assertEqual(
+                        token_path(),
+                        Path("~/custom/token.json").expanduser(),
+                    )
+            finally:
+                os.chdir(original)
 
     def test_specific_environment_paths_override_config_dir(self):
         with patch.dict(
