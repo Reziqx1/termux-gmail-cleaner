@@ -34,10 +34,7 @@ class PathResolutionTests(unittest.TestCase):
                 with patch.dict(os.environ, {}, clear=True):
                     self.assertEqual(
                         credentials_path(),
-                        Path.home()
-                        / ".config"
-                        / "gmail-cleaner"
-                        / "credentials.json",
+                        Path.home() / ".config" / "gmail-cleaner" / "credentials.json",
                     )
                     self.assertEqual(
                         token_path(),
