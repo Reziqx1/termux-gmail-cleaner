@@ -20,23 +20,37 @@ def config_dir() -> Path:
     return Path.home() / ".config" / APP_DIR_NAME
 
 
+def _legacy_local_path(filename: str) -> Path | None:
+    """Return a legacy working-directory path when it already exists."""
+    if CONFIG_DIR_ENV in os.environ:
+        return None
+    path = Path(filename)
+    return path if path.is_file() else None
+
+
 def credentials_path(explicit: Path | None = None) -> Path:
-    """Resolve OAuth client credentials path with explicit/env/default precedence."""
+    """Resolve OAuth client credentials with compatibility fallback."""
     if explicit is not None:
         return explicit.expanduser()
     override = os.environ.get(CREDENTIALS_ENV)
     if override:
         return Path(override).expanduser()
+    legacy = _legacy_local_path("credentials.json")
+    if legacy is not None:
+        return legacy
     return config_dir() / "credentials.json"
 
 
 def token_path(explicit: Path | None = None) -> Path:
-    """Resolve OAuth token path with explicit/env/default precedence."""
+    """Resolve OAuth token with compatibility fallback."""
     if explicit is not None:
         return explicit.expanduser()
     override = os.environ.get(TOKEN_ENV)
     if override:
         return Path(override).expanduser()
+    legacy = _legacy_local_path("token.json")
+    if legacy is not None:
+        return legacy
     return config_dir() / "token.json"
 
 
