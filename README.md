@@ -258,12 +258,22 @@ v0.2.0 is the published evidence-first analysis foundation. It adds read-only ma
 - [x] Cleanup candidate reports
 - [x] Structured output for scripts
 
+### v0.3 — Evidence-first cleanup workflow (planned)
+
+v0.3 focuses on making the existing safety model more useful in real operation without introducing automatic deletion intelligence.
+
+- [ ] Safer verification and batch reporting
+- [ ] Operator-facing human-readable and stable JSON reports
+- [ ] Reusable local cleanup presets
+- [ ] Portable configuration/path handling
+- [ ] Real Android/Termux validation for the completed workflow
+
+See [docs/V0.3_ROADMAP.md](docs/V0.3_ROADMAP.md) and GitHub issue [#17](https://github.com/Reziqx1/termux-gmail-cleaner/issues/17).
+
 ### Later
 
-- [ ] Safer batch verification/reporting
-- [ ] Reusable cleanup presets
-- [ ] Better operator-facing reports
-- [ ] Additional portability improvements
+- Additional portability improvements beyond the v0.3 scope
+- Broader workflow integrations only if they preserve the safety contract
 
 ## Security
 
