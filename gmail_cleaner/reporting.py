@@ -50,7 +50,7 @@ def build_cleanup_report(
     not_verified_count = sum(item.state == "not-verified" for item in verification)
     error_count = sum(item.state == "verification-error" for item in verification)
 
-    if not execution.moved_ids:
+    if not verification:
         verification_status = "not-run"
     elif error_count == len(verification):
         verification_status = "verification-error"
@@ -63,6 +63,8 @@ def build_cleanup_report(
         mutation_status = "no-op"
     elif execution.failed:
         mutation_status = "partial" if execution.moved_count else "failed"
+    elif execution.ambiguous:
+        mutation_status = "ambiguous"
     else:
         mutation_status = "success"
 
@@ -80,6 +82,7 @@ def build_cleanup_report(
                     "batch_index": batch.batch_index,
                     "requested": batch.requested,
                     "succeeded": batch.succeeded,
+                    "ambiguous": batch.ambiguous,
                     **({"error": batch.error} if batch.error else {}),
                 }
                 for batch in execution.batches
