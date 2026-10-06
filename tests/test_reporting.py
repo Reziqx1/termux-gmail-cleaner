@@ -1,6 +1,5 @@
 import json
 import unittest
-from datetime import UTC, datetime
 
 from gmail_cleaner.analysis import MailboxAnalysis, ReviewCandidate
 from gmail_cleaner.reporting import (
@@ -54,10 +53,7 @@ class ReportingTests(unittest.TestCase):
         parsed = json.loads(rendered)
 
         self.assertEqual(parsed, report)
-        self.assertEqual(
-            rendered,
-            render_json(report),
-        )
+        self.assertEqual(rendered, render_json(report))
 
     def test_human_renderer_contains_operator_summary(self):
         report = build_analysis_report(
