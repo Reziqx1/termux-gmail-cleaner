@@ -174,9 +174,7 @@ class AnalyzeCliTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             Path(tmp, "preset.toml").write_text(
-                'query = "category:promotions"\n'
-                "max_results = 100\n"
-                "preview = 25\n",
+                'query = "category:promotions"\nmax_results = 100\npreview = 25\n',
                 encoding="utf-8",
             )
             args = parse_args(
