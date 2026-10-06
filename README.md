@@ -308,7 +308,7 @@ The complete v0.3 implementation is merged to `main`, passed the real Android/Te
 - [x] Real Android/Termux + Gmail validation for the completed workflow
 - [x] v0.3.0 GitHub release
 
-See [docs/V0.3_ROADMAP.md](docs/V0.3_ROADMAP.md). Next milestone: GitHub issue [#32](https://github.com/Reziqx1/termux-gmail-cleaner/issues/32) — reviewable cleanup plans.
+See [docs/V0.3_ROADMAP.md](docs/V0.3_ROADMAP.md). Next milestone: GitHub issue [#32](https://github.com/Reziqx1/termux-gmail-cleaner/issues/32) — reviewable cleanup plans. The design is documented in [docs/V0.4_ROADMAP.md](docs/V0.4_ROADMAP.md).
 
 ### Later
 
