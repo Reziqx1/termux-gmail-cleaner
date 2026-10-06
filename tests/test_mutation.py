@@ -47,6 +47,26 @@ class MutationTests(unittest.TestCase):
         self.assertFalse(result.batches[1].succeeded)
         self.assertIsNotNone(result.batches[1].error)
 
+    def test_connection_error_is_ambiguous_and_stops(self):
+        service = MagicMock()
+        execute = service.users.return_value.messages.return_value.batchModify.return_value.execute
+        execute.side_effect = ConnectionAbortedError("connection reset")
+
+        result = move_to_trash_detailed(
+            service,
+            ["m1", "m2"],
+            batch_size=2,
+        )
+
+        self.assertFalse(result.failed)
+        self.assertTrue(result.ambiguous)
+        self.assertEqual(result.moved_ids, ())
+        self.assertEqual(result.attempted_ids, ("m1", "m2"))
+        self.assertTrue(result.batches[0].ambiguous)
+        self.assertEqual(result.batches[0].succeeded, False)
+        self.assertIn("ConnectionAbortedError", result.batches[0].error or "")
+        self.assertEqual(execute.call_count, 1)
+
     def test_empty_input_is_no_op(self):
         service = MagicMock()
 
