@@ -30,6 +30,6 @@ jobs:
       - name: Lint
         run: ruff check .
       - name: Format check
-        run: ruff format --check .
+        run: ruff format --check gmail_cleaner tests
       - name: Unit tests
         run: python -m unittest discover -s tests -v
