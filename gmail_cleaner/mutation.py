@@ -41,7 +41,9 @@ class MutationExecution:
     @property
     def attempted_ids(self) -> tuple[str, ...]:
         """Return IDs from every batch actually attempted."""
-        return tuple(message_id for batch in self.batches for message_id in batch.message_ids)
+        return tuple(
+            message_id for batch in self.batches for message_id in batch.message_ids
+        )
 
     @property
     def moved_count(self) -> int:
