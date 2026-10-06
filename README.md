@@ -285,9 +285,9 @@ The complete v0.3 implementation is covered by the GitHub Actions test/security 
 
 ## Project status
 
-**v0.3.0 — release ready.**
+**v0.3.0 — released.**
 
-The complete v0.3 implementation is merged to `main` and has passed the real Android/Termux + Gmail release validation. The next action is publishing the v0.3.0 GitHub release from this commit.
+The complete v0.3 implementation is merged to `main`, passed the real Android/Termux + Gmail release validation, and is published as GitHub Release **v0.3.0**. The next milestone is v0.4: reviewable cleanup plans.
 
 ## Roadmap
 
@@ -298,7 +298,7 @@ The complete v0.3 implementation is merged to `main` and has passed the real And
 - [x] Cleanup candidate reports
 - [x] Structured output for scripts
 
-### v0.3 — Evidence-first cleanup workflow (release ready)
+### v0.3 — Evidence-first cleanup workflow (complete)
 
 - [x] Versioned analysis report model
 - [x] Human-readable analysis renderer
@@ -306,9 +306,9 @@ The complete v0.3 implementation is merged to `main` and has passed the real And
 - [x] Reusable local cleanup presets
 - [x] Portable configuration/path handling
 - [x] Real Android/Termux + Gmail validation for the completed workflow
-- [ ] v0.3.0 GitHub release
+- [x] v0.3.0 GitHub release
 
-See [docs/V0.3_ROADMAP.md](docs/V0.3_ROADMAP.md) and GitHub issue [#17](https://github.com/Reziqx1/termux-gmail-cleaner/issues/17).
+See [docs/V0.3_ROADMAP.md](docs/V0.3_ROADMAP.md). Next milestone: GitHub issue [#32](https://github.com/Reziqx1/termux-gmail-cleaner/issues/32) — reviewable cleanup plans.
 
 ### Later
 
