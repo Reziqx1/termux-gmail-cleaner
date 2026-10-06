@@ -29,6 +29,7 @@ from .reporting import (
     render_cleanup_human,
     render_json,
 )
+from .presets import DEFAULT_PRESET_DIR, list_presets, load_preset, preset_to_toml
 from .verifier import verify_trashed
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
@@ -201,19 +202,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=__version__)
     parser.add_argument(
         "--query",
-        required=True,
         help="Gmail search query, e.g. 'category:promotions older_than:1y'.",
     )
     parser.add_argument(
         "--max-results",
         type=int,
-        default=DEFAULT_MAX_RESULTS,
+        default=None,
         help=f"Maximum messages to inspect (default: {DEFAULT_MAX_RESULTS}).",
     )
     parser.add_argument(
         "--preview",
         type=int,
-        default=DEFAULT_PREVIEW,
+        default=None,
         help=f"Maximum message summaries to print (default: {DEFAULT_PREVIEW}).",
     )
     parser.add_argument(
@@ -254,7 +254,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--report-format",
         choices=("json", "human"),
-        default="json",
+        default=None,
         help="Analysis report format (default: json). Only used with --analyze.",
     )
     parser.add_argument(
@@ -266,46 +266,72 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--candidate-older-than",
         type=int,
-        default=180,
+        default=None,
         help="Minimum age in days for review candidates (default: 180).",
     )
     return parser
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    """Parse and validate command-line arguments."""
+    """Parse, load optional presets, and validate CLI arguments."""
     args = build_parser().parse_args(argv)
 
+    if args.list_presets and (args.preset or args.show_preset):
+        raise SystemExit(
+            "--list-presets cannot be combined with --preset or --show-preset."
+        )
+    if args.show_preset and args.preset:
+        raise SystemExit("--show-preset cannot be combined with --preset.")
+    if args.list_presets or args.show_preset:
+        return args
+
+    if args.preset:
+        preset = load_preset(args.preset, args.preset_dir)
+        if args.query is None:
+            args.query = preset["query"]
+        if args.max_results is None:
+            args.max_results = preset.get("max_results", DEFAULT_MAX_RESULTS)
+        if args.preview is None:
+            args.preview = preset.get("preview", DEFAULT_PREVIEW)
+        if args.report_format is None:
+            args.report_format = preset.get("report_format", "json")
+        if args.candidate_category is None:
+            args.candidate_category = preset.get("candidate_categories")
+        if args.candidate_older_than is None:
+            args.candidate_older_than = preset.get("candidate_older_than", 180)
+
+    args.max_results = (
+        DEFAULT_MAX_RESULTS if args.max_results is None else args.max_results
+    )
+    args.preview = DEFAULT_PREVIEW if args.preview is None else args.preview
+    args.report_format = "json" if args.report_format is None else args.report_format
+    args.candidate_older_than = (
+        180 if args.candidate_older_than is None else args.candidate_older_than
+    )
+
+    if not args.query or not args.query.strip():
+        raise SystemExit(
+            "--query is required unless --preset, --list-presets, or --show-preset is used."
+        )
     if args.max_results <= 0:
         raise SystemExit("--max-results must be greater than zero.")
-
     if args.preview < 0:
         raise SystemExit("--preview cannot be negative.")
-
     if args.apply and args.preview == 0 and not args.yes:
         raise SystemExit(
             "--preview 0 with --apply requires --yes. "
             "Interactive apply must show at least one preview item."
         )
-
-    if not args.query.strip():
-        raise SystemExit("--query cannot be empty.")
-
     if args.yes and not args.apply:
         raise SystemExit("--yes requires --apply.")
-
     if args.allow_broad_query and not args.apply:
         raise SystemExit("--allow-broad-query requires --apply.")
-
     if args.analyze and args.apply:
         raise SystemExit("--analyze cannot be combined with --apply.")
-
     if args.analyze and args.yes:
         raise SystemExit("--analyze is read-only; --yes is not applicable.")
-
     if not args.analyze and args.report_format != "json":
         raise SystemExit("--report-format requires --analyze.")
-
     if args.candidate_older_than < 0:
         raise SystemExit("--candidate-older-than cannot be negative.")
 
@@ -317,7 +343,6 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         )
 
     return args
-
 
 def _confirm_apply(total: int) -> bool:
     """Require an explicit interactive confirmation before mutating Gmail."""
@@ -332,6 +357,16 @@ def _confirm_apply(total: int) -> bool:
 
 def run(args: argparse.Namespace) -> int:
     """Execute the requested cleanup operation."""
+    if args.list_presets:
+        names = list_presets(args.preset_dir)
+        if names:
+            print("\n".join(names))
+        return 0
+
+    if args.show_preset:
+        print(preset_to_toml(args.show_preset, args.preset_dir), end="")
+        return 0
+
     service = build_service(args.credentials, args.token)
     message_ids = search_message_ids(service, args.query, args.max_results)
 
