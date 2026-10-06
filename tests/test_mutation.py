@@ -51,9 +51,7 @@ class MutationTests(unittest.TestCase):
 
     def test_transport_failure_is_reported_without_traceback(self):
         service = MagicMock()
-        execute = (
-            service.users.return_value.messages.return_value.batchModify.return_value.execute
-        )
+        execute = service.users.return_value.messages.return_value.batchModify.return_value.execute
         execute.side_effect = ConnectionAbortedError(
             103,
             "Software caused connection abort",
