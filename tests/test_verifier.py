@@ -45,6 +45,18 @@ class VerifierTests(unittest.TestCase):
         self.assertEqual(result[0].state, "verification-error")
         self.assertIn("HttpError", result[0].detail or "")
 
+    def test_reports_verification_transport_error(self):
+        service = MagicMock()
+        service.users.return_value.messages.return_value.get.return_value.execute.side_effect = ConnectionAbortedError(
+            103,
+            "Software caused connection abort",
+        )
+
+        result = verify_trashed(service, ["m1"])
+
+        self.assertEqual(result[0].state, "verification-error")
+        self.assertIn("ConnectionAbortedError", result[0].detail or "")
+
     def test_empty_input_is_no_op(self):
         service = MagicMock()
 
