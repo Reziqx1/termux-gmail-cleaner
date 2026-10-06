@@ -176,8 +176,8 @@ def move_to_trash(service: Any, message_ids: Sequence[str]) -> int:
     if execution.failed:
         failed = next(batch for batch in execution.batches if not batch.succeeded)
         raise GmailMutationError(
-            f"Trash operation failed in batch {failed.batch_index}; "
-            f"successfully moved {execution.moved_count} message(s) first."
+            f"Trash operation failed in batch {failed.batch_index}/{len(execution.batches)} "
+            f"after successfully moving {execution.moved_count} message(s)."
         )
     return execution.moved_count
 
