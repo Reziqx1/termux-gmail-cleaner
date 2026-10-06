@@ -39,6 +39,11 @@ class MutationExecution:
         )
 
     @property
+    def attempted_ids(self) -> tuple[str, ...]:
+        """Return IDs from every batch actually attempted."""
+        return tuple(message_id for batch in self.batches for message_id in batch.message_ids)
+
+    @property
     def moved_count(self) -> int:
         """Return the count of successfully processed message IDs."""
         return len(self.moved_ids)
@@ -74,14 +79,14 @@ def move_to_trash_detailed(
                 )
                 .execute()
             )
-        except HttpError as exc:
+        except (HttpError, OSError) as exc:
             batches.append(
                 BatchOutcome(
                     batch_index=index,
                     requested=len(batch_ids),
                     message_ids=batch_ids,
                     succeeded=False,
-                    error=f"HttpError: {exc}",
+                    error=f"{type(exc).__name__}: {exc}",
                 )
             )
             break
