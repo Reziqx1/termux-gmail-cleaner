@@ -20,12 +20,16 @@ from googleapiclient.errors import HttpError
 
 from . import __version__
 from .analysis import analyze_observations
+from .mutation import move_to_trash_detailed
 from .observer import fetch_observations
 from .reporting import (
     build_analysis_report,
+    build_cleanup_report,
     render_analysis_human,
+    render_cleanup_human,
     render_json,
 )
+from .verifier import verify_trashed
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
 DEFAULT_MAX_RESULTS = 50
@@ -382,8 +386,19 @@ def run(args: argparse.Namespace) -> int:
         print("Cancelled. No changes made.")
         return 0
 
-    moved = move_to_trash(service, message_ids)
-    print(f"Moved {moved} message(s) to Gmail Trash.")
+    execution = move_to_trash_detailed(service, message_ids)
+    verification = verify_trashed(service, execution.moved_ids)
+    report = build_cleanup_report(
+        query=args.query,
+        matched=len(message_ids),
+        execution=execution,
+        verification=verification,
+    )
+    print(render_cleanup_human(report))
+    if execution.failed or any(
+        item.state != "verified" for item in verification
+    ):
+        return 1
     return 0
 
 
