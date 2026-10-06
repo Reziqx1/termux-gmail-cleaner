@@ -76,9 +76,11 @@ class PresetTests(unittest.TestCase):
             self.assertEqual(list_presets(Path(tmp)), ["alpha", "zeta"])
 
     def test_missing_preset_has_clear_error(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaises(FileNotFoundError) as context:
-                load_preset("missing", Path(tmp))
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            self.assertRaises(FileNotFoundError) as context,
+        ):
+            load_preset("missing", Path(tmp))
         self.assertIn("Preset not found", str(context.exception))
 
     def test_preset_path_is_contained_by_directory(self):
