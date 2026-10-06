@@ -20,12 +20,22 @@ from googleapiclient.errors import HttpError
 
 from . import __version__
 from .analysis import analyze_observations
+from .mutation import move_to_trash_detailed
 from .observer import fetch_observations
+from .presets import (
+    DEFAULT_PRESET_DIR,
+    list_presets,
+    load_preset,
+    preset_to_toml,
+)
 from .reporting import (
     build_analysis_report,
+    build_cleanup_report,
     render_analysis_human,
+    render_cleanup_human,
     render_json,
 )
+from .verifier import verify_trashed
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
 DEFAULT_MAX_RESULTS = 50
@@ -62,7 +72,6 @@ def _secure_permissions(path: Path) -> None:
     try:
         path.chmod(0o600)
     except OSError:
-        # Some filesystems do not support Unix permission changes.
         pass
 
 
@@ -99,8 +108,6 @@ def get_credentials(credentials_path: Path, token_path: Path) -> Credentials:
 
         _secure_permissions(credentials_path)
         flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)
-        # Termux may not have a desktop browser integration; the URL can still
-        # be opened manually in the Android browser.
         creds = flow.run_local_server(port=0, open_browser=False)
 
     _secure_write(token_path, creds.to_json())
@@ -164,29 +171,15 @@ def fetch_metadata(service: Any, message_id: str) -> tuple[str, str]:
 
 
 def move_to_trash(service: Any, message_ids: Sequence[str]) -> int:
-    """Move messages to Gmail Trash in bounded batches and report progress."""
-    moved = 0
-    batches = list(chunked(message_ids, BATCH_SIZE))
-
-    for index, batch in enumerate(batches, start=1):
-        try:
-            (
-                service.users()
-                .messages()
-                .batchModify(
-                    userId="me",
-                    body={"ids": batch, "addLabelIds": ["TRASH"]},
-                )
-                .execute()
-            )
-        except HttpError as exc:
-            raise GmailMutationError(
-                f"Trash operation failed in batch {index}/{len(batches)} "
-                f"after successfully moving {moved} message(s)."
-            ) from exc
-        moved += len(batch)
-
-    return moved
+    """Move messages to Gmail Trash using the legacy integer-count API."""
+    execution = move_to_trash_detailed(service, message_ids)
+    if execution.failed:
+        failed = next(batch for batch in execution.batches if not batch.succeeded)
+        raise GmailMutationError(
+            f"Trash operation failed in batch {failed.batch_index}; "
+            f"successfully moved {execution.moved_count} message(s) first."
+        )
+    return execution.moved_count
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -197,19 +190,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=__version__)
     parser.add_argument(
         "--query",
-        required=True,
         help="Gmail search query, e.g. 'category:promotions older_than:1y'.",
     )
     parser.add_argument(
         "--max-results",
         type=int,
-        default=DEFAULT_MAX_RESULTS,
+        default=None,
         help=f"Maximum messages to inspect (default: {DEFAULT_MAX_RESULTS}).",
     )
     parser.add_argument(
         "--preview",
         type=int,
-        default=DEFAULT_PREVIEW,
+        default=None,
         help=f"Maximum message summaries to print (default: {DEFAULT_PREVIEW}).",
     )
     parser.add_argument(
@@ -250,7 +242,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--report-format",
         choices=("json", "human"),
-        default="json",
+        default=None,
         help="Analysis report format (default: json). Only used with --analyze.",
     )
     parser.add_argument(
@@ -262,46 +254,93 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--candidate-older-than",
         type=int,
-        default=180,
+        default=None,
         help="Minimum age in days for review candidates (default: 180).",
+    )
+    parser.add_argument(
+        "--preset",
+        help="Use a local credential-free TOML cleanup preset.",
+    )
+    parser.add_argument(
+        "--preset-dir",
+        type=Path,
+        default=DEFAULT_PRESET_DIR,
+        help="Directory containing local presets.",
+    )
+    parser.add_argument(
+        "--list-presets",
+        action="store_true",
+        help="List available local presets and exit.",
+    )
+    parser.add_argument(
+        "--show-preset",
+        help="Show a validated local preset and exit.",
     )
     return parser
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    """Parse and validate command-line arguments."""
+    """Parse, load optional presets, and validate CLI arguments."""
     args = build_parser().parse_args(argv)
+
+    if args.list_presets and (args.preset or args.show_preset):
+        raise SystemExit(
+            "--list-presets cannot be combined with --preset or --show-preset."
+        )
+    if args.show_preset and args.preset:
+        raise SystemExit("--show-preset cannot be combined with --preset.")
+    if args.list_presets or args.show_preset:
+        return args
+
+    if args.preset:
+        preset = load_preset(args.preset, args.preset_dir)
+        if args.query is None:
+            args.query = preset["query"]
+        if args.max_results is None:
+            args.max_results = preset.get("max_results", DEFAULT_MAX_RESULTS)
+        if args.preview is None:
+            args.preview = preset.get("preview", DEFAULT_PREVIEW)
+        if args.report_format is None:
+            args.report_format = preset.get("report_format", "json")
+        if args.candidate_category is None:
+            categories = preset.get("candidate_categories")
+            args.candidate_category = categories if categories is not None else None
+        if args.candidate_older_than is None:
+            args.candidate_older_than = preset.get("candidate_older_than", 180)
+
+    args.max_results = (
+        DEFAULT_MAX_RESULTS if args.max_results is None else args.max_results
+    )
+    args.preview = DEFAULT_PREVIEW if args.preview is None else args.preview
+    args.report_format = "json" if args.report_format is None else args.report_format
+    args.candidate_older_than = (
+        180 if args.candidate_older_than is None else args.candidate_older_than
+    )
+
+    if not args.query or not args.query.strip():
+        raise SystemExit(
+            "--query is required unless --preset, --list-presets, or --show-preset is used."
+        )
 
     if args.max_results <= 0:
         raise SystemExit("--max-results must be greater than zero.")
-
     if args.preview < 0:
         raise SystemExit("--preview cannot be negative.")
-
     if args.apply and args.preview == 0 and not args.yes:
         raise SystemExit(
             "--preview 0 with --apply requires --yes. "
             "Interactive apply must show at least one preview item."
         )
-
-    if not args.query.strip():
-        raise SystemExit("--query cannot be empty.")
-
     if args.yes and not args.apply:
         raise SystemExit("--yes requires --apply.")
-
     if args.allow_broad_query and not args.apply:
         raise SystemExit("--allow-broad-query requires --apply.")
-
     if args.analyze and args.apply:
         raise SystemExit("--analyze cannot be combined with --apply.")
-
     if args.analyze and args.yes:
         raise SystemExit("--analyze is read-only; --yes is not applicable.")
-
     if not args.analyze and args.report_format != "json":
         raise SystemExit("--report-format requires --analyze.")
-
     if args.candidate_older_than < 0:
         raise SystemExit("--candidate-older-than cannot be negative.")
 
@@ -328,6 +367,16 @@ def _confirm_apply(total: int) -> bool:
 
 def run(args: argparse.Namespace) -> int:
     """Execute the requested cleanup operation."""
+    if args.list_presets:
+        names = list_presets(args.preset_dir)
+        if names:
+            print("\n".join(names))
+        return 0
+
+    if args.show_preset:
+        print(preset_to_toml(args.show_preset, args.preset_dir), end="")
+        return 0
+
     service = build_service(args.credentials, args.token)
     message_ids = search_message_ids(service, args.query, args.max_results)
 
@@ -382,8 +431,17 @@ def run(args: argparse.Namespace) -> int:
         print("Cancelled. No changes made.")
         return 0
 
-    moved = move_to_trash(service, message_ids)
-    print(f"Moved {moved} message(s) to Gmail Trash.")
+    execution = move_to_trash_detailed(service, message_ids)
+    verification = verify_trashed(service, execution.moved_ids)
+    report = build_cleanup_report(
+        query=args.query,
+        matched=len(message_ids),
+        execution=execution,
+        verification=verification,
+    )
+    print(render_cleanup_human(report))
+    if execution.failed or any(item.state != "verified" for item in verification):
+        return 1
     return 0
 
 
@@ -392,7 +450,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         args = parse_args(argv)
         return run(args)
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, NotADirectoryError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     except (RuntimeError, GoogleAuthError, HttpError) as exc:
