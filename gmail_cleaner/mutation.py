@@ -20,6 +20,7 @@ class BatchOutcome:
     message_ids: tuple[str, ...]
     succeeded: bool
     error: str | None = None
+    ambiguous: bool = False
 
 
 @dataclass(frozen=True)
@@ -45,8 +46,22 @@ class MutationExecution:
 
     @property
     def failed(self) -> bool:
-        """Return whether any mutation batch failed."""
-        return any(not batch.succeeded for batch in self.batches)
+        """Return whether any mutation batch definitely failed."""
+        return any(not batch.succeeded and not batch.ambiguous for batch in self.batches)
+
+    @property
+    def ambiguous(self) -> bool:
+        """Return whether any mutation batch has an unknown transport outcome."""
+        return any(batch.ambiguous for batch in self.batches)
+
+    @property
+    def attempted_ids(self) -> tuple[str, ...]:
+        """Return IDs from every batch whose mutation was attempted."""
+        return tuple(
+            message_id
+            for batch in self.batches
+            for message_id in batch.message_ids
+        )
 
 
 def move_to_trash_detailed(
@@ -82,6 +97,18 @@ def move_to_trash_detailed(
                     message_ids=batch_ids,
                     succeeded=False,
                     error=f"HttpError: {exc}",
+                )
+            )
+            break
+        except (ConnectionError, TimeoutError) as exc:
+            batches.append(
+                BatchOutcome(
+                    batch_index=index,
+                    requested=len(batch_ids),
+                    message_ids=batch_ids,
+                    succeeded=False,
+                    error=f"{type(exc).__name__}: {exc}",
+                    ambiguous=True,
                 )
             )
             break
