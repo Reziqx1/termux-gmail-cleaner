@@ -23,6 +23,19 @@ class AnalyzeCliTests(unittest.TestCase):
         self.assertTrue(args.analyze)
         self.assertEqual(args.candidate_category, ["promotions"])
         self.assertEqual(args.candidate_older_than, 90)
+        self.assertEqual(args.report_format, "json")
+
+    def test_parser_accepts_human_report_format(self):
+        args = parse_args(
+            [
+                "--query",
+                "category:promotions",
+                "--analyze",
+                "--report-format",
+                "human",
+            ]
+        )
+        self.assertEqual(args.report_format, "human")
 
     def test_parser_rejects_analysis_with_apply(self):
         with self.assertRaises(SystemExit):
@@ -32,7 +45,18 @@ class AnalyzeCliTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             parse_args(["--query", "category:promotions", "--analyze", "--yes"])
 
-    def test_analysis_command_is_read_only_and_outputs_json(self):
+    def test_parser_rejects_human_report_without_analysis(self):
+        with self.assertRaises(SystemExit):
+            parse_args(
+                [
+                    "--query",
+                    "category:promotions",
+                    "--report-format",
+                    "human",
+                ]
+            )
+
+    def build_service(self):
         service = MagicMock()
         service.users.return_value.messages.return_value.list.return_value.execute.return_value = {
             "messages": [{"id": "m1"}]
@@ -49,6 +73,10 @@ class AnalyzeCliTests(unittest.TestCase):
                 ]
             },
         }
+        return service
+
+    def test_analysis_command_is_read_only_and_outputs_json(self):
+        service = self.build_service()
 
         stdout = io.StringIO()
         with (
@@ -69,10 +97,44 @@ class AnalyzeCliTests(unittest.TestCase):
             )
 
         report = json.loads(stdout.getvalue())
+        self.assertEqual(report["schema_version"], "0.3")
+        self.assertEqual(report["report_type"], "analysis")
         self.assertEqual(report["query"], "category:promotions")
         self.assertEqual(report["matched"], 1)
         self.assertEqual(report["analysis"]["total_messages"], 1)
-        self.assertEqual(report["analysis"]["sender_counts"], {"news@example.com": 1})
+        self.assertEqual(
+            report["analysis"]["sender_counts"],
+            {"news@example.com": 1},
+        )
+        service.users.return_value.messages.return_value.batchModify.assert_not_called()
+
+    def test_analysis_command_can_render_human_report(self):
+        service = self.build_service()
+
+        stdout = io.StringIO()
+        with (
+            patch("gmail_cleaner.cli.build_service", return_value=service),
+            redirect_stdout(stdout),
+        ):
+            self.assertEqual(
+                main(
+                    [
+                        "--query",
+                        "category:promotions",
+                        "--analyze",
+                        "--report-format",
+                        "human",
+                        "--max-results",
+                        "1",
+                    ]
+                ),
+                0,
+            )
+
+        output = stdout.getvalue()
+        self.assertIn("Mode: READ-ONLY ANALYSIS", output)
+        self.assertIn("Matched: 1 message(s)", output)
+        self.assertIn("Review candidates: none", output)
         service.users.return_value.messages.return_value.batchModify.assert_not_called()
 
 
