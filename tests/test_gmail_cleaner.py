@@ -276,6 +276,13 @@ class GmailApiTests(unittest.TestCase):
         with (
             patch("gmail_cleaner.cli.build_service", return_value=service),
             patch("gmail_cleaner.cli._confirm_apply", return_value=True),
+            patch(
+                "gmail_cleaner.cli.verify_trashed",
+                return_value=(
+                    __import__("gmail_cleaner.verifier", fromlist=["VerificationResult"])
+                    .VerificationResult("abc", "verified"),
+                ),
+            ),
         ):
             self.assertEqual(run(args), 0)
 
