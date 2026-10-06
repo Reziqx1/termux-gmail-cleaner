@@ -35,7 +35,7 @@ def make_service():
                     {"name": "Subject", "value": "Test"},
                     {"name": "From", "value": "Example <test@example.com>"},
                 ]
-            }
+            },
         },
     )
     return messages, FakeService(messages)
