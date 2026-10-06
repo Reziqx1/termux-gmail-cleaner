@@ -137,6 +137,105 @@ class AnalyzeCliTests(unittest.TestCase):
         self.assertIn("Review candidates: none", output)
         service.users.return_value.messages.return_value.batchModify.assert_not_called()
 
+    def test_parser_loads_preset_values(self):
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "old-promotions.toml").write_text(
+                'query = "category:promotions older_than:1y"\n'
+                "max_results = 100\n"
+                "preview = 25\n"
+                'candidate_categories = ["promotions"]\n'
+                "candidate_older_than = 180\n"
+                'report_format = "human"\n',
+                encoding="utf-8",
+            )
+            args = parse_args(
+                [
+                    "--preset",
+                    "old-promotions",
+                    "--preset-dir",
+                    tmp,
+                    "--analyze",
+                ]
+            )
+
+        self.assertEqual(args.query, "category:promotions older_than:1y")
+        self.assertEqual(args.max_results, 100)
+        self.assertEqual(args.preview, 25)
+        self.assertEqual(args.candidate_category, ["promotions"])
+        self.assertEqual(args.candidate_older_than, 180)
+        self.assertEqual(args.report_format, "human")
+
+    def test_cli_overrides_preset_values(self):
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "preset.toml").write_text(
+                'query = "category:promotions"\n'
+                "max_results = 100\n"
+                "preview = 25\n",
+                encoding="utf-8",
+            )
+            args = parse_args(
+                [
+                    "--preset",
+                    "preset",
+                    "--preset-dir",
+                    tmp,
+                    "--query",
+                    "from:example.com",
+                    "--max-results",
+                    "5",
+                    "--preview",
+                    "2",
+                ]
+            )
+
+        self.assertEqual(args.query, "from:example.com")
+        self.assertEqual(args.max_results, 5)
+        self.assertEqual(args.preview, 2)
+
+    def test_list_presets_can_run_without_gmail_service(self):
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "zeta.toml").write_text('query = "from:zeta@example.com"\n')
+            Path(tmp, "alpha.toml").write_text('query = "from:alpha@example.com"\n')
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                self.assertEqual(
+                    main(["--list-presets", "--preset-dir", tmp]),
+                    0,
+                )
+
+        self.assertEqual(stdout.getvalue().splitlines(), ["alpha", "zeta"])
+
+    def test_show_preset_can_run_without_gmail_service(self):
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "preset.toml").write_text('query = "from:example.com"\n')
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                self.assertEqual(
+                    main(
+                        [
+                            "--show-preset",
+                            "preset",
+                            "--preset-dir",
+                            tmp,
+                        ]
+                    ),
+                    0,
+                )
+
+        self.assertIn('query = "from:example.com"', stdout.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
