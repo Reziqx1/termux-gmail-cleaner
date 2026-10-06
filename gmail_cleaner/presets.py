@@ -49,7 +49,7 @@ def _validate_mapping(data: dict[str, Any], source: Path) -> dict[str, Any]:
         if expected is int and isinstance(value, bool):
             raise TypeError(f"{source}: {field} must be an integer")
         if not isinstance(value, expected):
-            raise ValueError(
+            raise TypeError(
                 f"{source}: {field} must be {expected.__name__}, got {type(value).__name__}"
             )
         normalized[field] = value
