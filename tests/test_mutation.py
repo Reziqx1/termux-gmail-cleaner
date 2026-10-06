@@ -21,6 +21,7 @@ class MutationTests(unittest.TestCase):
 
         self.assertFalse(result.failed)
         self.assertEqual(result.moved_ids, ("m1", "m2", "m3"))
+        self.assertEqual(result.attempted_ids, ("m1", "m2", "m3"))
         self.assertEqual(result.moved_count, 3)
         self.assertEqual(len(result.batches), 2)
         self.assertTrue(all(batch.succeeded for batch in result.batches))
@@ -41,11 +42,29 @@ class MutationTests(unittest.TestCase):
 
         self.assertTrue(result.failed)
         self.assertEqual(result.moved_ids, ("m1", "m2"))
+        self.assertEqual(result.attempted_ids, ("m1", "m2", "m3", "m4"))
         self.assertEqual(result.moved_count, 2)
         self.assertEqual(len(result.batches), 2)
         self.assertTrue(result.batches[0].succeeded)
         self.assertFalse(result.batches[1].succeeded)
         self.assertIsNotNone(result.batches[1].error)
+
+    def test_transport_failure_is_reported_without_traceback(self):
+        service = MagicMock()
+        execute = (
+            service.users.return_value.messages.return_value.batchModify.return_value.execute
+        )
+        execute.side_effect = ConnectionAbortedError(103, "Software caused connection abort")
+
+        result = move_to_trash_detailed(service, ["m1"])
+
+        self.assertTrue(result.failed)
+        self.assertEqual(result.moved_ids, ())
+        self.assertEqual(result.attempted_ids, ("m1",))
+        self.assertEqual(result.moved_count, 0)
+        self.assertEqual(len(result.batches), 1)
+        self.assertFalse(result.batches[0].succeeded)
+        self.assertIn("ConnectionAbortedError", result.batches[0].error or "")
 
     def test_empty_input_is_no_op(self):
         service = MagicMock()
@@ -54,6 +73,7 @@ class MutationTests(unittest.TestCase):
 
         self.assertFalse(result.failed)
         self.assertEqual(result.moved_ids, ())
+        self.assertEqual(result.attempted_ids, ())
         self.assertEqual(result.batches, ())
         service.users.return_value.messages.return_value.batchModify.assert_not_called()
 
