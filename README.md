@@ -41,6 +41,7 @@ Gmail cleanup is easy to automate badly. This project keeps the core operation s
 - Partial-batch failure reporting
 - Credential handling and refresh
 - Read-only mailbox analysis with transparent candidate reporting
+- Versioned analysis reports with JSON and human-readable output
 - Unit tests across Python 3.11–3.14
 - GitHub Actions test and dependency-audit workflows
 - Dependabot for Python and GitHub Actions dependencies
@@ -111,6 +112,16 @@ gmail-cleaner --query 'category:promotions newer_than:1y' --analyze
 The command prints structured JSON containing sender/category/age distributions and transparent review candidates. By default, a candidate must match the selected category and be at least 180 days old. Change the threshold or category explicitly with `--candidate-older-than` and `--candidate-category`.
 
 Analysis uses lightweight Gmail metadata only; it does not download message bodies or attachments.
+
+### Human-readable analysis report
+
+v0.3 adds a separate operator-facing renderer without changing the analysis logic:
+
+```bash
+gmail-cleaner --query 'category:promotions newer_than:1y' --analyze --report-format human
+```
+
+Use JSON when another program needs structured data; use human output when reviewing the mailbox interactively. Both modes remain read-only.
 
 ### Apply
 
@@ -193,7 +204,7 @@ metadata preview   metadata observer
      │          analysis core
      │               │
      │               ▼
-     │          JSON report
+     │          report renderers
      │
      └── apply gate ──► batchModify(TRASH)
                               │
@@ -201,7 +212,7 @@ metadata preview   metadata observer
                          verification
 ```
 
-The v0.2 analysis path is read-only and cannot be combined with `--apply`. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/V0.2_ANALYSIS.md](docs/V0.2_ANALYSIS.md) for the design boundaries.
+The v0.2 analysis path is read-only and cannot be combined with `--apply`. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/V0.2_ANALYSIS.md](docs/V0.2_ANALYSIS.md), and [docs/V0.3_ROADMAP.md](docs/V0.3_ROADMAP.md) for the design boundaries.
 
 ## Development
 
@@ -241,13 +252,13 @@ The project has been validated on a real Android/Termux environment with:
 - dependency security audit passing on the merged v0.2 commit
 - GitHub Release **v0.2.0** published from `main` at commit `fe1eca4609393ea2e860ae195cff164c9a2a3c13`
 
-These checks establish that the core workflow works; they are not a guarantee that every Gmail query is safe. Query scope remains the operator's responsibility.
+The v0.3 report renderer is covered by the GitHub Actions test/security workflows but has not yet been validated against a real Gmail mailbox on Termux. These checks establish that the core workflow works; they are not a guarantee that every Gmail query is safe. Query scope remains the operator's responsibility.
 
 ## Project status
 
-**v0.2.0 — released.**
+**v0.2.0 — released; v0.3 in progress.**
 
-v0.2.0 is the published evidence-first analysis foundation. It adds read-only mailbox analysis, transparent candidate reporting, and structured evidence before any broader automation. The next roadmap work is planned for v0.3.
+v0.2.0 is the published evidence-first analysis foundation. v0.3 has begun with versioned analysis reports and human-readable output. The remaining v0.3 work is tracked in the roadmap and focused GitHub issues.
 
 ## Roadmap
 
@@ -258,12 +269,11 @@ v0.2.0 is the published evidence-first analysis foundation. It adds read-only ma
 - [x] Cleanup candidate reports
 - [x] Structured output for scripts
 
-### v0.3 — Evidence-first cleanup workflow (planned)
+### v0.3 — Evidence-first cleanup workflow (in progress)
 
-v0.3 focuses on making the existing safety model more useful in real operation without introducing automatic deletion intelligence.
-
+- [x] Versioned analysis report model
+- [x] Human-readable analysis renderer
 - [ ] Safer verification and batch reporting
-- [ ] Operator-facing human-readable and stable JSON reports
 - [ ] Reusable local cleanup presets
 - [ ] Portable configuration/path handling
 - [ ] Real Android/Termux validation for the completed workflow
