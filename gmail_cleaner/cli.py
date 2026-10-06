@@ -29,7 +29,12 @@ from .reporting import (
     render_cleanup_human,
     render_json,
 )
-from .presets import DEFAULT_PRESET_DIR, list_presets, load_preset, preset_to_toml
+from .presets import (
+    DEFAULT_PRESET_DIR,
+    list_presets,
+    load_preset,
+    preset_to_toml,
+)
 from .verifier import verify_trashed
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
@@ -268,6 +273,25 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=None,
         help="Minimum age in days for review candidates (default: 180).",
+    )
+    parser.add_argument(
+        "--preset",
+        help="Use a local credential-free TOML cleanup preset.",
+    )
+    parser.add_argument(
+        "--preset-dir",
+        type=Path,
+        default=DEFAULT_PRESET_DIR,
+        help="Directory containing local presets.",
+    )
+    parser.add_argument(
+        "--list-presets",
+        action="store_true",
+        help="List available local presets and exit.",
+    )
+    parser.add_argument(
+        "--show-preset",
+        help="Show a validated local preset and exit.",
     )
     return parser
 
