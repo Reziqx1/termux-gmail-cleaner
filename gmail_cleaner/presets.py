@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 PRESET_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
-
 DEFAULT_PRESET_DIR = Path.home() / ".config" / "gmail-cleaner" / "presets"
 
 _PRESET_TYPES = {
@@ -43,22 +42,24 @@ def _validate_mapping(data: dict[str, Any], source: Path) -> dict[str, Any]:
         raise ValueError(f"{source}: unsupported field(s): {names}")
 
     normalized: dict[str, Any] = {}
-
     for field, expected in _PRESET_TYPES.items():
         if field not in data:
             continue
         value = data[field]
         if expected is int and isinstance(value, bool):
-            raise ValueError(f"{source}: {field} must be an integer")
+            raise TypeError(f"{source}: {field} must be an integer")
         if not isinstance(value, expected):
-            raise ValueError(
-                f"{source}: {field} must be {expected.__name__}, got {type(value).__name__}"
+            raise TypeError(
+                f"{source}: {field} must be {expected.__name__}, "
+                f"got {type(value).__name__}"
             )
         normalized[field] = value
 
     categories = data.get("candidate_categories")
     if categories is not None:
-        if not isinstance(categories, list) or not categories or not all(
+        if not isinstance(categories, list):
+            raise TypeError(f"{source}: candidate_categories must be a list of strings")
+        if not categories or not all(
             isinstance(item, str) and item.strip() for item in categories
         ):
             raise ValueError(
@@ -68,7 +69,6 @@ def _validate_mapping(data: dict[str, Any], source: Path) -> dict[str, Any]:
 
     if "query" not in normalized or not normalized["query"].strip():
         raise ValueError(f"{source}: query is required")
-
     if "max_results" in normalized and normalized["max_results"] <= 0:
         raise ValueError(f"{source}: max_results must be greater than zero")
     if "preview" in normalized and normalized["preview"] < 0:
@@ -99,8 +99,7 @@ def load_preset(name: str, preset_dir: Path = DEFAULT_PRESET_DIR) -> dict[str, A
         raise ValueError(f"{path}: invalid TOML: {exc}") from exc
 
     if not isinstance(raw, dict):
-        raise ValueError(f"{path}: preset root must be a TOML table")
-
+        raise TypeError(f"{path}: preset root must be a TOML table")
     return _validate_mapping(raw, path)
 
 
@@ -109,10 +108,8 @@ def list_presets(preset_dir: Path = DEFAULT_PRESET_DIR) -> list[str]:
     directory = preset_dir.expanduser()
     if not directory.exists():
         return []
-
     if not directory.is_dir():
         raise NotADirectoryError(f"Preset directory is not a directory: {directory}")
-
     return sorted(
         path.stem
         for path in directory.glob("*.toml")
@@ -123,9 +120,6 @@ def list_presets(preset_dir: Path = DEFAULT_PRESET_DIR) -> list[str]:
 def preset_to_toml(name: str, preset_dir: Path = DEFAULT_PRESET_DIR) -> str:
     """Return the raw TOML text of one validated preset."""
     path = preset_path(name, preset_dir)
-    if not path.exists():
-        raise FileNotFoundError(f"Preset not found: {path}")
-    # Validate before exposing the preset to the operator.
     load_preset(name, preset_dir)
     return path.read_text(encoding="utf-8")
 
