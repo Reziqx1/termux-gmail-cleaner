@@ -51,8 +51,7 @@ def render_analysis_human(report: Mapping[str, Any]) -> str:
     if category_counts:
         lines.append("Categories:")
         lines.extend(
-            f"  - {name}: {count}"
-            for name, count in sorted(category_counts.items())
+            f"  - {name}: {count}" for name, count in sorted(category_counts.items())
         )
 
     if age_bucket_counts:
