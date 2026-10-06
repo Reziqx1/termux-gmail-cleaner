@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add versioned analysis reports with deterministic JSON and human-readable output.
+- Add structured Trash mutation outcomes with per-batch success/failure reporting.
+- Add read-only Trash verification with explicit verification states.
+- Add local, credential-free TOML cleanup presets with strict validation and CLI precedence.
+- Add centralized portable configuration, credential, token, and preset path resolution.
+
+### Changed
+
+- Apply now produces a final cleanup report and verifies successfully processed messages without introducing a second mutation path.
+- Preserve the existing dry-run, explicit `--apply`, exact `TRASH` confirmation, and broad-query safety boundaries.
+- Keep analysis metadata-only and permanent deletion unsupported.
+
+### Validation
+
+- GitHub Actions test and security workflows pass for the complete v0.3 implementation slices.
+- Real Android/Termux + Gmail validation remains the final release gate in issue #25.
+
 ## [0.2.0] - 2026-10-06
 
 ### Added
