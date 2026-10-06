@@ -54,7 +54,10 @@ class MutationTests(unittest.TestCase):
         execute = (
             service.users.return_value.messages.return_value.batchModify.return_value.execute
         )
-        execute.side_effect = ConnectionAbortedError(103, "Software caused connection abort")
+        execute.side_effect = ConnectionAbortedError(
+            103,
+            "Software caused connection abort",
+        )
 
         result = move_to_trash_detailed(service, ["m1"])
 
