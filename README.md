@@ -127,6 +127,29 @@ gmail-cleaner --query 'category:promotions newer_than:1y' --analyze --report-for
 
 Use JSON when another program needs structured data; use human output when reviewing the mailbox interactively. Both modes remain read-only.
 
+### Reusable presets
+
+Save a reviewed cleanup recipe locally as TOML, then load it without putting credentials into the preset:
+
+```text
+query = "category:promotions older_than:1y"
+max_results = 100
+preview = 25
+candidate_categories = ["promotions"]
+candidate_older_than = 180
+report_format = "json"
+```
+
+Use the preset management commands:
+
+```bash
+gmail-cleaner --list-presets
+gmail-cleaner --show-preset old-promotions
+gmail-cleaner --preset old-promotions --analyze
+```
+
+Explicit CLI values override preset values, and a preset never bypasses `--apply`, confirmation, or broad-query safety gates.
+
 ### Apply
 
 ```bash
@@ -256,13 +279,13 @@ The project has been validated on a real Android/Termux environment with:
 - dependency security audit passing on the merged v0.2 commit
 - GitHub Release **v0.2.0** published from `main` at commit `fe1eca4609393ea2e860ae195cff164c9a2a3c13`
 
-The v0.3 report renderer is covered by the GitHub Actions test/security workflows but has not yet been validated against a real Gmail mailbox on Termux. These checks establish that the core workflow works; they are not a guarantee that every Gmail query is safe. Query scope remains the operator's responsibility.
+The complete v0.3 implementation is covered by the GitHub Actions test/security workflows. Real Android/Termux + Gmail validation of the v0.3 release candidate is tracked separately in GitHub issue [#25](https://github.com/Reziqx1/termux-gmail-cleaner/issues/25). These checks establish that the core workflow works; they are not a guarantee that every Gmail query is safe. Query scope remains the operator's responsibility.
 
 ## Project status
 
-**v0.2.0 — released; v0.3 in progress.**
+**v0.2.0 — released; v0.3 release candidate.**
 
-v0.2.0 is the published evidence-first analysis foundation. v0.3 has begun with versioned analysis reports and human-readable output. The remaining v0.3 work is tracked in the roadmap and focused GitHub issues.
+The complete v0.3 implementation is merged to `main`: reporting, mutation verification, reusable local presets, and portable configuration paths are in place. The remaining release gate is real Android/Termux + Gmail validation, tracked in issue [#25](https://github.com/Reziqx1/termux-gmail-cleaner/issues/25).
 
 ## Roadmap
 
@@ -277,10 +300,11 @@ v0.2.0 is the published evidence-first analysis foundation. v0.3 has begun with 
 
 - [x] Versioned analysis report model
 - [x] Human-readable analysis renderer
-- [ ] Safer verification and batch reporting
-- [ ] Reusable local cleanup presets
-- [ ] Portable configuration/path handling
-- [ ] Real Android/Termux validation for the completed workflow
+- [x] Safer verification and batch reporting
+- [x] Reusable local cleanup presets
+- [x] Portable configuration/path handling
+- [ ] Real Android/Termux + Gmail validation for the completed workflow
+- [ ] v0.3.0 release
 
 See [docs/V0.3_ROADMAP.md](docs/V0.3_ROADMAP.md) and GitHub issue [#17](https://github.com/Reziqx1/termux-gmail-cleaner/issues/17).
 
