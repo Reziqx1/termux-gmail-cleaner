@@ -18,8 +18,10 @@ class PresetTests(unittest.TestCase):
             path = write_example_preset("old-promotions", preset_dir=directory)
 
             self.assertEqual(path, preset_path("old-promotions", directory))
-            self.assertEqual(load_preset("old-promotions", directory)["query"],
-                             "category:promotions older_than:1y")
+            self.assertEqual(
+                load_preset("old-promotions", directory)["query"],
+                "category:promotions older_than:1y",
+            )
             self.assertEqual(list_presets(directory), ["old-promotions"])
 
     def test_invalid_preset_name_fails_closed(self):
@@ -41,8 +43,19 @@ class PresetTests(unittest.TestCase):
     def test_missing_query_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bad.toml"
-            path.write_text('preview = 5\n', encoding="utf-8")
+            path.write_text("preview = 5\n", encoding="utf-8")
             with self.assertRaises(ValueError):
+                load_preset("bad", Path(tmp))
+
+    def test_wrong_type_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bad.toml"
+            path.write_text(
+                'query = "category:promotions"\n'
+                'preview = "five"\n',
+                encoding="utf-8",
+            )
+            with self.assertRaises(TypeError):
                 load_preset("bad", Path(tmp))
 
     def test_cli_loads_preset_values(self):
