@@ -22,6 +22,7 @@ from gmail_cleaner.cli import (
     parse_args,
     search_message_ids,
 )
+from gmail_cleaner.verifier import VerificationResult
 
 
 def make_service():
@@ -278,10 +279,7 @@ class GmailApiTests(unittest.TestCase):
             patch("gmail_cleaner.cli._confirm_apply", return_value=True),
             patch(
                 "gmail_cleaner.cli.verify_trashed",
-                return_value=(
-                    __import__("gmail_cleaner.verifier", fromlist=["VerificationResult"])
-                    .VerificationResult("abc", "verified"),
-                ),
+                return_value=(VerificationResult("abc", "verified"),),
             ),
         ):
             self.assertEqual(run(args), 0)
