@@ -96,6 +96,7 @@ class PresetTests(unittest.TestCase):
                     "2",
                     "--report-format",
                     "human",
+                    "--analyze",
                 ]
             )
 
