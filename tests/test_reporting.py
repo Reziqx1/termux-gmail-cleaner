@@ -139,6 +139,37 @@ class ReportingTests(unittest.TestCase):
         self.assertEqual(report["verification"]["not_verified"], 1)
         self.assertEqual(report["mutation"]["batches"][1]["succeeded"], False)
 
+    def test_cleanup_report_can_verify_ambiguous_transport_result(self):
+        execution = MutationExecution(
+            batches=(
+                BatchOutcome(
+                    batch_index=1,
+                    requested=2,
+                    message_ids=("m1", "m2"),
+                    succeeded=False,
+                    ambiguous=True,
+                    error="ConnectionAbortedError",
+                ),
+            )
+        )
+        verification = (
+            VerificationResult("m1", "verified"),
+            VerificationResult("m2", "verified"),
+        )
+
+        report = build_cleanup_report(
+            query="subject:validation",
+            matched=2,
+            execution=execution,
+            verification=verification,
+        )
+
+        self.assertEqual(report["mutation"]["status"], "ambiguous")
+        self.assertEqual(report["mutation"]["moved"], 0)
+        self.assertEqual(report["verification"]["status"], "verified")
+        self.assertEqual(report["verification"]["verified"], 2)
+        self.assertTrue(report["mutation"]["batches"][0]["ambiguous"])
+
     def test_cleanup_human_renderer_explains_batch_and_verification_state(self):
         execution = MutationExecution(
             batches=(
