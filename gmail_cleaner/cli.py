@@ -395,9 +395,7 @@ def run(args: argparse.Namespace) -> int:
         verification=verification,
     )
     print(render_cleanup_human(report))
-    if execution.failed or any(
-        item.state != "verified" for item in verification
-    ):
+    if execution.failed or any(item.state != "verified" for item in verification):
         return 1
     return 0
 
