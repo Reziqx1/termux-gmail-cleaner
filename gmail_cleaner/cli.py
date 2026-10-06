@@ -368,6 +368,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
     return args
 
+
 def _confirm_apply(total: int) -> bool:
     """Require an explicit interactive confirmation before mutating Gmail."""
     try:
