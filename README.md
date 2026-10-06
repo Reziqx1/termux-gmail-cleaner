@@ -82,11 +82,15 @@ This is the development setup validated on a real Android/Termux environment.
 4. Run the CLI. On first use, it prints an authorization URL that can be opened manually in the Android browser.
 5. The resulting token is stored as `token.json` by default.
 
-Optional environment overrides:
+Configuration and credential paths are resolved with this precedence:
+**explicit CLI path → environment override → application config directory**.
+The default application config directory is `~/.config/gmail-cleaner`. The same portable resolver is used for local presets.
 
 ```bash
 export GMAIL_CREDENTIALS="$HOME/.config/gmail-cleaner/credentials.json"
 export GMAIL_TOKEN="$HOME/.config/gmail-cleaner/token.json"
+export GMAIL_CLEANER_CONFIG_DIR="$HOME/.config/gmail-cleaner"
+export GMAIL_CLEANER_PRESET_DIR="$HOME/.config/gmail-cleaner/presets"
 ```
 
 For a test-mode Google OAuth application, authorize only an account that is permitted to use the application's configured test audience.
