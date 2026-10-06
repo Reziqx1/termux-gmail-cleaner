@@ -73,10 +73,7 @@ def _validate_mapping(data: dict[str, Any], source: Path) -> dict[str, Any]:
         raise ValueError(f"{source}: max_results must be greater than zero")
     if "preview" in normalized and normalized["preview"] < 0:
         raise ValueError(f"{source}: preview cannot be negative")
-    if (
-        "candidate_older_than" in normalized
-        and normalized["candidate_older_than"] < 0
-    ):
+    if "candidate_older_than" in normalized and normalized["candidate_older_than"] < 0:
         raise ValueError(f"{source}: candidate_older_than cannot be negative")
     if "report_format" in normalized and normalized["report_format"] not in {
         "json",
