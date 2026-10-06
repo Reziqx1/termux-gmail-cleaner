@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Any
 
-from googleapiclient.errors import HttpError
+from googleapiclient.errors import GoogleAPICallError
 
 
 @dataclass(frozen=True)
@@ -37,16 +37,7 @@ def verify_trashed(
                 )
                 .execute()
             )
-        except HttpError as exc:
-            results.append(
-                VerificationResult(
-                    message_id=message_id,
-                    state="verification-error",
-                    detail=f"HttpError: {exc}",
-                )
-            )
-            continue
-        except Exception as exc:
+        except GoogleAPICallError as exc:
             results.append(
                 VerificationResult(
                     message_id=message_id,
