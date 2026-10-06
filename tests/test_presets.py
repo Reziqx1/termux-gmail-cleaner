@@ -35,8 +35,7 @@ class PresetTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bad.toml"
             path.write_text(
-                'query = "category:promotions"\n'
-                'unexpected = "nope"\n',
+                'query = "category:promotions"\nunexpected = "nope"\n',
                 encoding="utf-8",
             )
             with self.assertRaises(ValueError):
@@ -53,8 +52,7 @@ class PresetTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bad.toml"
             path.write_text(
-                'query = "category:promotions"\n'
-                'preview = "five"\n',
+                'query = "category:promotions"\npreview = "five"\n',
                 encoding="utf-8",
             )
             with self.assertRaises(TypeError):
