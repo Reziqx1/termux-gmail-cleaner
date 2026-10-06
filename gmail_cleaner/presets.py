@@ -7,8 +7,10 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+from .paths import preset_dir
+
 PRESET_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
-DEFAULT_PRESET_DIR = Path.home() / ".config" / "gmail-cleaner" / "presets"
+DEFAULT_PRESET_DIR = preset_dir()
 
 _PRESET_TYPES = {
     "query": str,
