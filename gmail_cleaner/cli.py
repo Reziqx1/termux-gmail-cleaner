@@ -208,14 +208,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="OAuth client JSON path.",
-
     )
     parser.add_argument(
         "--token",
         type=Path,
         default=None,
         help="OAuth token JSON path.",
-
     )
     parser.add_argument(
         "--apply",
@@ -267,7 +265,6 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="Directory containing local presets.",
-
     )
     parser.add_argument(
         "--list-presets",
