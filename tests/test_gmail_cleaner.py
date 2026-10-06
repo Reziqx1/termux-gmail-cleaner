@@ -28,6 +28,7 @@ def make_service():
     messages = FakeMessages(
         list_responses=[{"messages": [{"id": "abc"}]}],
         metadata={
+            "labelIds": ["TRASH"],
             "payload": {
                 "headers": [
                     {"name": "Subject", "value": "Test"},
@@ -275,14 +276,11 @@ class GmailApiTests(unittest.TestCase):
         with (
             patch("gmail_cleaner.cli.build_service", return_value=service),
             patch("gmail_cleaner.cli._confirm_apply", return_value=True),
-            patch(
-                "gmail_cleaner.cli.move_to_trash", return_value=1
-            ) as move_to_trash_mock,
         ):
             self.assertEqual(run(args), 0)
 
-        move_to_trash_mock.assert_called_once_with(service, ["abc"])
-        self.assertEqual(messages.batch_calls, [])
+        self.assertEqual(len(messages.batch_calls), 1)
+        self.assertEqual(messages.batch_calls[0]["body"]["ids"], ["abc"])
 
     def test_main_reports_runtime_errors(self):
         stderr = io.StringIO()
