@@ -22,18 +22,18 @@ from . import __version__
 from .analysis import analyze_observations
 from .mutation import move_to_trash_detailed
 from .observer import fetch_observations
+from .presets import (
+    DEFAULT_PRESET_DIR,
+    list_presets,
+    load_preset,
+    preset_to_toml,
+)
 from .reporting import (
     build_analysis_report,
     build_cleanup_report,
     render_analysis_human,
     render_cleanup_human,
     render_json,
-)
-from .presets import (
-    DEFAULT_PRESET_DIR,
-    list_presets,
-    load_preset,
-    preset_to_toml,
 )
 from .verifier import verify_trashed
 
