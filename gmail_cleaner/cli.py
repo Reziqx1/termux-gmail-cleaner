@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 import sys
@@ -22,6 +21,11 @@ from googleapiclient.errors import HttpError
 from . import __version__
 from .analysis import analyze_observations
 from .observer import fetch_observations
+from .reporting import (
+    build_analysis_report,
+    render_analysis_human,
+    render_json,
+)
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
 DEFAULT_MAX_RESULTS = 50
@@ -241,7 +245,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--analyze",
         action="store_true",
-        help="Perform a read-only metadata analysis and print JSON.",
+        help="Perform a read-only metadata analysis and print a report.",
+    )
+    parser.add_argument(
+        "--report-format",
+        choices=("json", "human"),
+        default="json",
+        help="Analysis report format (default: json). Only used with --analyze.",
     )
     parser.add_argument(
         "--candidate-category",
@@ -289,6 +299,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     if args.analyze and args.yes:
         raise SystemExit("--analyze is read-only; --yes is not applicable.")
 
+    if not args.analyze and args.report_format != "json":
+        raise SystemExit("--report-format requires --analyze.")
+
     if args.candidate_older_than < 0:
         raise SystemExit("--candidate-older-than cannot be negative.")
 
@@ -326,12 +339,15 @@ def run(args: argparse.Namespace) -> int:
             candidate_categories=tuple(args.candidate_category or ("promotions",)),
             candidate_older_than_days=args.candidate_older_than,
         )
-        report = {
-            "query": args.query,
-            "matched": len(message_ids),
-            "analysis": result.to_dict(),
-        }
-        print(json.dumps(report, indent=2, sort_keys=True))
+        report = build_analysis_report(
+            query=args.query,
+            matched=len(message_ids),
+            analysis=result,
+        )
+        if args.report_format == "human":
+            print(render_analysis_human(report))
+        else:
+            print(render_json(report))
         return 0
 
     print(f"Query: {args.query}")
