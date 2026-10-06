@@ -47,7 +47,7 @@ def _validate_mapping(data: dict[str, Any], source: Path) -> dict[str, Any]:
             continue
         value = data[field]
         if expected is int and isinstance(value, bool):
-            raise ValueError(f"{source}: {field} must be an integer")
+            raise TypeError(f"{source}: {field} must be an integer")
         if not isinstance(value, expected):
             raise ValueError(
                 f"{source}: {field} must be {expected.__name__}, got {type(value).__name__}"
@@ -96,7 +96,7 @@ def load_preset(name: str, preset_dir: Path = DEFAULT_PRESET_DIR) -> dict[str, A
         raise ValueError(f"{path}: invalid TOML: {exc}") from exc
 
     if not isinstance(raw, dict):
-        raise ValueError(f"{path}: preset root must be a TOML table")
+        raise TypeError(f"{path}: preset root must be a TOML table")
     return _validate_mapping(raw, path)
 
 
