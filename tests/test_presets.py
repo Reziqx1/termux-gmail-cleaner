@@ -16,18 +16,12 @@ class PresetTests(unittest.TestCase):
         path = Path(directory) / f"{name}.toml"
         path.write_text(
             text
-            or 'query = "category:promotions older_than:1y"
-'
-            "max_results = 100
-"
-            "preview = 25
-"
-            'candidate_categories = ["promotions"]
-'
-            "candidate_older_than = 180
-"
-            'report_format = "json"
-',
+            or 'query = "category:promotions older_than:1y"\n'
+            "max_results = 100\n"
+            "preview = 25\n"
+            'candidate_categories = ["promotions"]\n'
+            "candidate_older_than = 180\n"
+            'report_format = "json"\n',
             encoding="utf-8",
         )
         return path
@@ -52,9 +46,10 @@ class PresetTests(unittest.TestCase):
 
     def test_rejects_unknown_fields(self):
         with tempfile.TemporaryDirectory() as tmp:
-            self.write_preset(tmp, text='query = "from:example.com"
-secret = "no"
-')
+            self.write_preset(
+                tmp,
+                text='query = "from:example.com"\nsecret = "no"\n',
+            )
             with self.assertRaises(ValueError):
                 load_preset("old-promotions", Path(tmp))
 
@@ -62,17 +57,14 @@ secret = "no"
         with tempfile.TemporaryDirectory() as tmp:
             self.write_preset(
                 tmp,
-                text='query = "from:example.com"
-max_results = true
-',
+                text='query = "from:example.com"\nmax_results = true\n',
             )
-            with self.assertRaises(ValueError):
+            with self.assertRaises(TypeError):
                 load_preset("old-promotions", Path(tmp))
 
     def test_rejects_missing_query(self):
         with tempfile.TemporaryDirectory() as tmp:
-            self.write_preset(tmp, text='preview = 10
-')
+            self.write_preset(tmp, text="preview = 10\n")
             with self.assertRaises(ValueError):
                 load_preset("old-promotions", Path(tmp))
 
