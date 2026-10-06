@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.0] - 2026-10-06
 
 ### Added
 
@@ -19,7 +19,7 @@
 ### Validation
 
 - GitHub Actions test and security workflows pass for the complete v0.3 implementation slices.
-- Real Android/Termux + Gmail validation remains the final release gate in issue #25.
+- Real Android/Termux + Gmail release validation completed and recorded in issue #25.
 
 ## [0.2.0] - 2026-10-06
 
