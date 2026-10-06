@@ -22,18 +22,20 @@ from gmail_cleaner.cli import (
     parse_args,
     search_message_ids,
 )
+from gmail_cleaner.verifier import VerificationResult
 
 
 def make_service():
     messages = FakeMessages(
         list_responses=[{"messages": [{"id": "abc"}]}],
         metadata={
+            "labelIds": ["TRASH"],
             "payload": {
                 "headers": [
                     {"name": "Subject", "value": "Test"},
                     {"name": "From", "value": "Example <test@example.com>"},
                 ]
-            }
+            },
         },
     )
     return messages, FakeService(messages)
@@ -276,13 +278,37 @@ class GmailApiTests(unittest.TestCase):
             patch("gmail_cleaner.cli.build_service", return_value=service),
             patch("gmail_cleaner.cli._confirm_apply", return_value=True),
             patch(
-                "gmail_cleaner.cli.move_to_trash", return_value=1
-            ) as move_to_trash_mock,
+                "gmail_cleaner.cli.verify_trashed",
+                return_value=(VerificationResult("abc", "verified"),),
+            ),
         ):
             self.assertEqual(run(args), 0)
 
-        move_to_trash_mock.assert_called_once_with(service, ["abc"])
-        self.assertEqual(messages.batch_calls, [])
+        self.assertEqual(len(messages.batch_calls), 1)
+        self.assertEqual(messages.batch_calls[0]["body"]["ids"], ["abc"])
+
+    def test_run_apply_reports_verified_trash_state(self):
+        from gmail_cleaner.cli import run
+
+        messages, service = make_service()
+        args = parse_args(["--query", "from:test@example.com", "--apply"])
+        stdout = io.StringIO()
+
+        with (
+            patch("gmail_cleaner.cli.build_service", return_value=service),
+            patch("gmail_cleaner.cli._confirm_apply", return_value=True),
+            redirect_stdout(stdout),
+        ):
+            self.assertEqual(run(args), 0)
+
+        output = stdout.getvalue()
+        self.assertIn("Mutation: success", output)
+        self.assertIn("Verification: verified", output)
+        self.assertTrue(messages.get_calls)
+        self.assertIn(
+            "minimal",
+            [call["format"] for call in messages.get_calls],
+        )
 
     def test_main_reports_runtime_errors(self):
         stderr = io.StringIO()
